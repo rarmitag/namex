@@ -53,3 +53,11 @@ class DevConfig(Config):
 class TestConfig(Config):
     DEBUG = True
     TESTING = True
+
+    from solr_admin.keycloak import Keycloak
+
+    class FakeOidc:
+        pass
+
+    Keycloak._oidc = FakeOidc()
+
