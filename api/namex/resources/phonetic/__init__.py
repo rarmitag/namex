@@ -1,3 +1,5 @@
+import pronouncing
+
 def match_consons(c1, c2):
     if set(['C', 'G']) == set([c1, c2]):
         return True
@@ -35,9 +37,7 @@ def first_vowels(word):
 
 
 def first_arpabet(word):
-    if word == 'LEAK':
-        return 'IY1'
-    if word == 'LEEK':
-        return 'IY1'
-
-    return word
+    arpabet = pronouncing.phones_for_word(word)
+    if not arpabet:
+        return word
+    return arpabet
