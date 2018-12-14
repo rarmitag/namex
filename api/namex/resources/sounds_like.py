@@ -5,7 +5,7 @@ import json
 from namex import jwt
 import urllib
 from flask import current_app
-from namex.resources.phonetic import first_vowels, first_arpabet, match_consons
+from namex.resources.phonetic import first_vowels, first_arpabet, match_consons, first_consonants
 
 api = Namespace('soundsLikeMeta', description='Sounds Like System - Metadata')
 import os
@@ -17,8 +17,8 @@ def post_treatment(docs, query):
     names = []
     for candidate in docs:
         name = candidate['name']
-        query_first_consonant = query[0]
-        name_first_consonant = name[0]
+        query_first_consonant = first_consonants(query)
+        name_first_consonant = first_consonants(name)
         if match_consons(query_first_consonant, name_first_consonant):
             query_first_vowels = first_vowels(query)
             name_first_vowels = first_vowels(name)
