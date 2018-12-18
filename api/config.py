@@ -87,11 +87,11 @@ class TestConfig(Config):
     JWT_OIDC_TEST_MODE = True
     JWT_OIDC_TEST_AUDIENCE = os.getenv('JWT_OIDC_AUDIENCE')
     JWT_OIDC_TEST_CLIENT_SECRET = os.getenv('JWT_OIDC_CLIENT_SECRET')
-    JWT_OIDC_TEST_ISSUER = 'https://sso-dev.pathfinder.gov.bc.ca/auth/realms/sbc'
+    JWT_OIDC_TEST_ISSUER = 'https://sso-test.pathfinder.gov.bc.ca/auth/realms/sbc'
     JWT_OIDC_TEST_KEYS = {
         "keys": [
             {
-                "kid": "flask-jwt-oidc-test-client",
+                "kid": "55xbg72jiz5d7pKdo7p4XKu0vTP6Qs-zkag1ZcVJY6U",
                 "kty": "RSA",
                 "alg": "RS256",
                 "use": "sig",
@@ -121,8 +121,7 @@ class TestConfig(Config):
         ]
     }
 
-    JWT_OIDC_TEST_PRIVATE_KEY_PEM = """
-    -----BEGIN RSA PRIVATE KEY-----
+    JWT_OIDC_TEST_PRIVATE_KEY_PEM = """-----BEGIN RSA PRIVATE KEY-----
     MIICXQIBAAKBgQDfn1nKQshOSj8xw44oC2klFWSNLmK3BnHONCJ1bZfq0EQ5gIfg
     tlvB+Px8Ya+VS3OnK7Cdi4iU1fxO9ktN6c6TjmmmFevk8wIwqLthmCSF3r+3+h4e
     ddj7hucMsXWv05QUrCPoL6YUUz7Cgpz7ra24rpAmK5z7lsV+f3BEvXkrUQIDAQAB

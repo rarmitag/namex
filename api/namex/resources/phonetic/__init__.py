@@ -1,7 +1,27 @@
-def match_consonate(c1, c2):
+import pronouncing
+
+def match_consons(c1, c2):
     if set(['C', 'G']) == set([c1, c2]):
         return True
     if set(['C', 'K']) == set([c1, c2]):
+        return True
+    if set(['CR', 'KR']) == set([c1, c2]):
+        return True
+    if set(['CL', 'KL']) == set([c1, c2]):
+        return True
+    if set(['PH', 'F']) == set([c1, c2]):
+        return True
+    if set(['GH', 'G']) == set([c1, c2]):
+        return True
+    if set(['GN', 'N']) == set([c1, c2]):
+        return True
+    if set(['KN', 'N']) == set([c1, c2]):
+        return True
+    if set(['PN', 'N']) == set([c1, c2]):
+        return True
+    if set(['WR', 'R']) == set([c1, c2]):
+        return True
+    if set(['RH', 'R']) == set([c1, c2]):
         return True
 
     return c1 == c2
@@ -34,69 +54,21 @@ def first_vowels(word):
     return value
 
 
+def first_consonants(word):
+    consonants = ['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'X']
+    value = ''
+    first_consonant_found = False
+    for letter in word:
+        if letter not in consonants and first_consonant_found:
+            break
+        if letter in consonants:
+            value += letter
+            first_consonant_found = True
+
+    return value
+
 def first_arpabet(word):
-    if word == 'LEAK':
-        return 'IY1'
-    if word == 'LEEK':
-        return 'IY1'
-
-    return word
-
-
-def designations():
-    return [
-        'AN',
-        'AND',
-        'ARE',
-        'AS',
-        'AT',
-        'BE',
-        'BUT',
-        'BY',
-        'FOR',
-        'IF',
-        'IN',
-        'INTO',
-        'IS',
-        'IT',
-        'NO',
-        'NOT',
-        'O',
-        'ON',
-        'OR',
-        'SUCH',
-        'THAT',
-        'THE',
-        'THEIR',
-        'THEN',
-        'THERE',
-        'THESE',
-        'THEY',
-        'THIS',
-        'TO',
-        'ASSOCIATION',
-        'ASSOC',
-        'ASSOC.',
-        'ASSN',
-        'ASSN.',
-        'COMPANY',
-        'CO',
-        'CO.',
-        'CORPORATION',
-        'CORP',
-        'CORP.',
-        'INCORPORATED',
-        'INC',
-        'INC.',
-        'INCORPOREE',
-        'LIABILITY',
-        'LIMITED',
-        'LTD',
-        'LTD.',
-        'LIMITEE',
-        'LTEE',
-        'LTEE.',
-        'SOCIETY',
-        'SOC',
-        'SOC.'
-    ]
+    arpabet = pronouncing.phones_for_word(word)
+    if not arpabet:
+        return word
+    return arpabet
