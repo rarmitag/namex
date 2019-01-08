@@ -34,8 +34,8 @@ class Config(object):
     DATABASE_USER = os.getenv('SOLR_ADMIN_APP_DATABASE_USERNAME', '')
     DATABASE_PASSWORD = os.getenv('SOLR_ADMIN_APP_DATABASE_PASSWORD', '')
     DATABASE_HOST = os.getenv('SOLR_ADMIN_APP_DATABASE_HOST', '')
-    DATABASE_PORT = os.getenv('SOLR_ADMIN_APP_DATABASE_PORT', '54321')
-    DATABASE_NAME = os.getenv('SOLR_ADMIN_APP_DATABASE_NAME', 'solr')
+    DATABASE_PORT = os.getenv('SOLR_ADMIN_APP_DATABASE_PORT', '5432')
+    DATABASE_NAME = os.getenv('SOLR_ADMIN_APP_DATABASE_NAME', '')
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://{user}:{password}@{host}:{port}/{name}'.format(
         user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port=int(DATABASE_PORT), name=DATABASE_NAME)

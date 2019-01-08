@@ -7,6 +7,6 @@ from solr_admin.models.restricted_condition import RestrictedCondition2
 class RestrictedWordTable(db.Model):
     __tablename__ = 'restricted_word'
 
-    word_id = db.Column(db.Integer, primary_key=True)
+    word_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     word = db.Column(db.VARCHAR(60))
     cnd_id = db.Column(db.Integer)

@@ -20,6 +20,6 @@ def seed_full_condition(db, cnd_id, cnd_text, allow_use, consent_required, conse
     db.session.commit()
 
 
-def seed_word(db, word_id, cnd_id, word):
-    db.session.add(RestrictedWordTable(word_id=word_id, cnd_id=cnd_id, word=word))
+def seed_word(db, cnd_id, word):
+    db.session.add(RestrictedWordTable(cnd_id=cnd_id, word=word))
     db.session.commit()

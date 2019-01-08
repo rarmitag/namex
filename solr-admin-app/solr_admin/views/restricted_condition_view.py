@@ -59,7 +59,6 @@ class RestrictedCondition2View(sqla.ModelView):
 
         data = list()
         previous_condition = None
-        previous_word = None
         for row in query:
             tmp, word = row
             condition = RestrictedCondition2(cnd_id=tmp.cnd_id,
@@ -69,15 +68,12 @@ class RestrictedCondition2View(sqla.ModelView):
                                              consenting_body=tmp.consenting_body,
                                              instructions=tmp.instructions,
                                              word_phrase=word.word)
-            if previous_word is None:
-                data.append(condition)
+
+            if previous_condition is not None and word.cnd_id == previous_condition.cnd_id:
+                previous_condition.word_phrase += ', ' + word.word
             else:
-                if word.cnd_id != previous_word.cnd_id:
-                    data.append(condition)
-                else:
-                    previous_condition.word_phrase += ', ' + word.word
-            previous_condition = condition
-            previous_word = word
+                data.append(condition)
+                previous_condition = condition
 
         return count, data
 
@@ -117,6 +113,19 @@ class RestrictedCondition2View(sqla.ModelView):
             _create_audit_log(model, 'CREATE')
         else:
             _create_audit_log(model, 'UPDATE')
+
+        from solr_admin.models.restricted_word_table import RestrictedWordTable
+        try:
+            RestrictedWordTable.query.filter_by(cnd_id=model.cnd_id).delete()
+            word_phrase = form.data['word_phrase']
+            for word in word_phrase.split(','):
+                self.session.add(RestrictedWordTable(cnd_id=model.cnd_id, word=word))
+
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+
+
 
     # After deleting the data create the audit log.
     def after_model_delete(self, model):
