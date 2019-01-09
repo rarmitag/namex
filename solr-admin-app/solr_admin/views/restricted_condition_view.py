@@ -12,7 +12,7 @@ from solr_admin.models import restricted_condition_audit
 # The customized ModelView that is used for working with the restricted conditions.
 class RestrictedCondition2View(sqla.ModelView):
 
-    column_list = ['cnd_id','cnd_text','consent_required','consenting_body','instructions','allow_use','word_phrase']
+    column_list = ['cnd_id','word_id']
 
     # We're unlikely to do multiple deletes, so just get rid of the checkboxes and the drop down for delete.
     action_disallowed_list = ['delete']
@@ -27,13 +27,13 @@ class RestrictedCondition2View(sqla.ModelView):
     column_default_sort = 'cnd_id'
 
     #This needs to be initialized, but we will override it in is_accessible.
-    column_editable_list = ['cnd_text','consent_required','consenting_body','instructions','allow_use','word_phrase']
+    column_editable_list = ['cnd_id','word_id']
 
     # Allow the user to filter on the these columns.
-    column_filters = ['cnd_id','consenting_body','cnd_text']
+    column_filters = ['cnd_id','word_id']
 
     # Search within the words phrases.
-    column_searchable_list = ['cnd_id','consenting_body','cnd_text']
+    column_searchable_list = ['cnd_id','word_id']
 
     # Use a custom create.html that warns the user about sorting what they enter.
     create_template = 'generic_create.html'
@@ -45,37 +45,28 @@ class RestrictedCondition2View(sqla.ModelView):
     list_template = 'generic_list.html'
 
     def get_query(self):
-        from solr_admin.models.restricted_condition import RestrictedCondition2
-        from solr_admin.models.restricted_word_table import RestrictedWordTable
+        from solr_admin.models.restricted_condition import RestrictedCondition
+        from solr_admin.models.restricted_word import RestrictedWord
+        from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 
-        return self.session.query(RestrictedCondition2, RestrictedWordTable).\
-            filter(RestrictedCondition2.cnd_id==RestrictedWordTable.cnd_id).\
-            order_by(RestrictedCondition2.cnd_id, RestrictedWordTable.word_id)
+        return self.session.query(RestrictedWordCondition).\
+            order_by(RestrictedWordCondition.cnd_id, RestrictedWordCondition.word_id)
 
     def get_list(self, page, sort_column, sort_desc, search, filters,
                  execute=True, page_size=None):
-        from solr_admin.models.restricted_condition import RestrictedCondition2
+        from solr_admin.models.restricted_word_condition import RestrictedWordCondition
         count, query = sqla.ModelView.get_list(self, page, sort_column, sort_desc, search, filters, True, page_size)
 
         data = list()
-        previous_condition = None
+        previous_word_condition = None
         for row in query:
-            tmp, word = row
-            condition = RestrictedCondition2(cnd_id=tmp.cnd_id,
-                                             cnd_text=tmp.cnd_text,
-                                             allow_use=tmp.allow_use,
-                                             consent_required=tmp.consent_required,
-                                             consenting_body=tmp.consenting_body,
-                                             instructions=tmp.instructions,
-                                             word_phrase=word.word)
+            word_condition = RestrictedWordCondition(cnd_id=row.cnd_id, word_id=row.word_id)
 
-            if previous_condition is not None and word.cnd_id == previous_condition.cnd_id:
-                previous_condition.word_phrase += ', ' + word.word
-            else:
-                data.append(condition)
-                previous_condition = condition
+            if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
+                data.append(word_condition)
+                previous_word_condition = word_condition
 
-        return count, data
+        return len(data), data
 
 
     #form_choices = {'cnd_text': RestrictedWord.cnd_text}
@@ -114,12 +105,12 @@ class RestrictedCondition2View(sqla.ModelView):
         else:
             _create_audit_log(model, 'UPDATE')
 
-        from solr_admin.models.restricted_word_table import RestrictedWordTable
+        from solr_admin.models.restricted_word import RestrictedWord
         try:
-            RestrictedWordTable.query.filter_by(cnd_id=model.cnd_id).delete()
+            RestrictedWord.query.filter_by(cnd_id=model.cnd_id).delete()
             word_phrase = form.data['word_phrase']
             for word in word_phrase.split(','):
-                self.session.add(RestrictedWordTable(cnd_id=model.cnd_id, word=word))
+                self.session.add(RestrictedWord(cnd_id=model.cnd_id, word=word))
 
             self.session.commit()
         except Exception:

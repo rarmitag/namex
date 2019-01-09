@@ -1,5 +1,5 @@
 from solr_admin.views.restricted_condition_view import RestrictedCondition2View
-from solr_admin.models.restricted_condition import RestrictedCondition2
+from solr_admin.models.restricted_condition import RestrictedCondition
 from tests.support.seeds import seed_condition, seed_word, seed_full_condition
 from hamcrest import *
 
@@ -8,7 +8,7 @@ def test_aggregation(db):
     seed_condition(db, cnd_id=1, consenting_body='needs approval')
     seed_word(db, cnd_id=1, word='tdd')
     seed_word(db, cnd_id=1, word='quality')
-    view = RestrictedCondition2View(RestrictedCondition2, db.session)
+    view = RestrictedCondition2View(RestrictedCondition, db.session)
     count, data = view.get_list(page=0, sort_column=None, sort_desc=None, search=None, filters=None)
 
     assert_that(len(data), equal_to(1))
@@ -23,7 +23,7 @@ def test_respect_creation_order(db):
     seed_word(db, cnd_id=2, word='quality')
     seed_word(db, cnd_id=1, word='word-1')
     seed_word(db, cnd_id=2, word='tdd')
-    view = RestrictedCondition2View(RestrictedCondition2, db.session)
+    view = RestrictedCondition2View(RestrictedCondition, db.session)
     count, data = view.get_list(page=0, sort_column=None, sort_desc=None, search=None, filters=None)
 
     assert_that(len(data), equal_to(2))
@@ -44,7 +44,7 @@ def test_populates_all_fields(db):
                         consenting_body='needs approval',
                         instructions='those-instructions')
     seed_word(db, cnd_id=1, word='tdd')
-    view = RestrictedCondition2View(RestrictedCondition2, db.session)
+    view = RestrictedCondition2View(RestrictedCondition, db.session)
     count, data = view.get_list(page=0, sort_column=None, sort_desc=None, search=None, filters=None)
 
     assert_that(len(data), equal_to(1))

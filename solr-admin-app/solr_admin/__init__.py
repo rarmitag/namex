@@ -11,6 +11,7 @@ from solr_admin import models
 
 from solr_admin.models import synonym
 from solr_admin.models import restricted_condition
+from solr_admin.models import restricted_word_condition
 from solr_admin.models import decision_reason
 
 from solr_admin.models import synonym_audit
@@ -50,7 +51,7 @@ def create_application(run_mode=os.getenv('FLASK_ENV', 'production')):
     admin = flask_admin.Admin(application, name='Namex Administration', template_mode='bootstrap3')
 
     admin.add_view(synonym_view.SynonymView(synonym.Synonym, models.db.session))
-    admin.add_view(restricted_condition_view.RestrictedCondition2View(restricted_condition.RestrictedCondition2, models.db.session))
+    admin.add_view(restricted_condition_view.RestrictedCondition2View(restricted_word_condition.RestrictedWordCondition, models.db.session))
     admin.add_view(decision_reason_view.DecisionReasonView(decision_reason.DecisionReason, models.db.session))
 
     admin.add_view(synonym_audit_view.SynonymAuditView(synonym_audit.SynonymAudit, models.db.session))

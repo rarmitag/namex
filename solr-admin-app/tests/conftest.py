@@ -48,8 +48,9 @@ def clean_db():
     from flask_sqlalchemy import SQLAlchemy
     from solr_admin import create_application
     from solr_admin.models.synonym import Synonym
-    from solr_admin.models.restricted_condition import RestrictedCondition2
-    from solr_admin.models.restricted_word_table import RestrictedWordTable
+    from solr_admin.models.restricted_condition import RestrictedCondition
+    from solr_admin.models.restricted_word import RestrictedWord
+    from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 
     app = create_application(run_mode='testing')
     db = SQLAlchemy(app)
@@ -62,8 +63,9 @@ def clean_db():
     db.drop_all()
 
     Synonym.metadata.create_all(bind=db.engine)
-    RestrictedCondition2.metadata.create_all(bind=db.engine)
-    RestrictedWordTable.metadata.create_all(bind=db.engine)
+    RestrictedCondition.metadata.create_all(bind=db.engine)
+    RestrictedWord.metadata.create_all(bind=db.engine)
+    RestrictedWordCondition.metadata.create_all(bind=db.engine)
 
     return db
 
