@@ -1,75 +1,80 @@
 
-import re
-
 from flask import current_app, request
 from flask_admin.contrib import sqla
-from wtforms import validators
+from sqlalchemy import func
 
 from solr_admin import keycloak
-from solr_admin import models
-from solr_admin.models import restricted_condition_audit
 
-# The customized ModelView that is used for working with the restricted conditions.
-class RestrictedCondition2View(sqla.ModelView):
+from solr_admin.models.restricted_condition import RestrictedCondition
+from solr_admin.models.restricted_word import RestrictedWord
+from solr_admin.models.restricted_word_condition import RestrictedWordCondition
+from solr_admin.models.virtual_word_condition import VirtualWordCondition
 
-    column_list = ['cnd_id','word_id']
 
-    # We're unlikely to do multiple deletes, so just get rid of the checkboxes and the drop down for delete.
+class VirtualWordConditionView(sqla.ModelView):
+
+    column_list = ['cnd_id', 'word_id', 'rc_consenting_body', 'rc_words']
+    column_labels = {
+        'cnd_id': 'cnd_id',
+        'word_id': 'word_id',
+        'rc_consenting_body': 'consenting body',
+        'rc_words': 'word phrase'
+    }
+
     action_disallowed_list = ['delete']
 
-    # Allow export as a CSV file.
     can_export = True
 
-    # Allow the user to change the page size.
     can_set_page_size = True
 
-    # Keep everything sorted, although realistically also we need to sort the values within a row before it is saved.
-    column_default_sort = 'cnd_id'
+    column_editable_list = ['rc_consenting_body', 'rc_words']
 
-    #This needs to be initialized, but we will override it in is_accessible.
-    column_editable_list = ['cnd_id','word_id']
+    column_filters = ['rc_consenting_body']
 
-    # Allow the user to filter on the these columns.
-    column_filters = ['cnd_id','word_id']
+    column_searchable_list = ['rc_consenting_body']
 
-    # Search within the words phrases.
-    column_searchable_list = ['cnd_id','word_id']
-
-    # Use a custom create.html that warns the user about sorting what they enter.
     create_template = 'generic_create.html'
-
-    # Use a custom edit.html that warns the user about sorting what they enter.
     edit_template = 'generic_edit.html'
-
-    # Use a custom list.html that provides a page size drop down with extra choices.
     list_template = 'generic_list.html'
 
     def get_query(self):
-        from solr_admin.models.restricted_condition import RestrictedCondition
-        from solr_admin.models.restricted_word import RestrictedWord
-        from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 
-        return self.session.query(RestrictedWordCondition).\
+        return self.session.query(RestrictedWordCondition, RestrictedCondition, RestrictedWord). \
+            filter(RestrictedWordCondition.cnd_id == RestrictedCondition.cnd_id). \
+            filter(RestrictedWordCondition.word_id == RestrictedWord.word_id). \
             order_by(RestrictedWordCondition.cnd_id, RestrictedWordCondition.word_id)
+
+    def get_count_query(self):
+        return self.session.query(func.count('*')).select_from(RestrictedWordCondition, RestrictedCondition). \
+            filter(RestrictedWordCondition.cnd_id == RestrictedCondition.cnd_id)
+
+    def _get_default_order(self):
+        return None
 
     def get_list(self, page, sort_column, sort_desc, search, filters,
                  execute=True, page_size=None):
-        from solr_admin.models.restricted_word_condition import RestrictedWordCondition
         count, query = sqla.ModelView.get_list(self, page, sort_column, sort_desc, search, filters, True, page_size)
 
         data = list()
         previous_word_condition = None
         for row in query:
-            word_condition = RestrictedWordCondition(cnd_id=row.cnd_id, word_id=row.word_id)
+            rwc, rc, rw = row
+            word_condition = VirtualWordCondition(
+                cnd_id=rwc.cnd_id,
+                word_id=rwc.word_id,
+                rc_consenting_body=rc.consenting_body,
+                rc_words=rw.word_phrase
+            )
 
             if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
                 data.append(word_condition)
                 previous_word_condition = word_condition
+            else:
+                previous_word_condition.rc_words += ', ' + rw.word_phrase
 
         return len(data), data
 
-
-    #form_choices = {'cnd_text': RestrictedWord.cnd_text}
+    # form_choices = {'cnd_text': RestrictedWord.cnd_text}
     # At runtime determine whether or not the user has access to functionality of the view. The rule is that data is
     # only editable in the test environment.
     def is_accessible(self):
