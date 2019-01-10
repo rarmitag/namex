@@ -63,3 +63,26 @@ def test_word_phrase_update(browser, base_url, db):
 
     cell = browser.find_element_by_css_selector(cell_css)
     assert_that(cell.text, equal_to('happy, new, year'))
+
+
+def test_consenting_body_update(browser, base_url, db):
+    cnd_id = seed_condition(db, consenting_body='initial value')
+    tdd_id = seed_word(db, word='tdd')
+    quality_id = seed_word(db, word='quality')
+    seed_word_condition(db, cnd_id, tdd_id)
+    seed_word_condition(db, cnd_id, quality_id)
+
+    browser.get(base_url + '/')
+    browser.find_element_by_tag_name('a').click()
+    browser.find_element_by_link_text('Virtual Word Condition').click()
+    browser.find_element_by_link_text('initial value').click()
+
+    cell_css = 'table.model-list tbody tr:nth-child(1) td.col-rc_consenting_body '
+    browser.find_element_by_css_selector(cell_css + 'input').clear()
+    browser.find_element_by_css_selector(cell_css + 'input').send_keys('new value')
+    browser.find_element_by_css_selector(cell_css + 'button.editable-submit').click()
+
+    browser.find_element_by_link_text('Virtual Word Condition').click()
+
+    cell = browser.find_element_by_css_selector(cell_css)
+    assert_that(cell.text, equal_to('new value'))

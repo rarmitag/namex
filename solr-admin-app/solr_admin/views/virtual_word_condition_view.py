@@ -100,10 +100,20 @@ class VirtualWordConditionView(sqla.ModelView):
                 if field.name == name:
                     return field.data
 
+        consenting_body = value('rc_consenting_body')
         rc_words = value('rc_words')
         cnd_id = value('list_form_pk').split(',')[0]
 
-        replace_word_condition(self.session, cnd_id, rc_words)
+        if rc_words is not None:
+            replace_word_condition(self.session, cnd_id, rc_words)
+
+        if consenting_body is not None:
+            try:
+                condition = self.session.query(RestrictedCondition).filter_by(cnd_id=cnd_id).first()
+                condition.consenting_body = consenting_body
+                self.session.commit()
+            except Exception:
+                self.session.rollback()
 
         return gettext('Record was successfully saved.')
 
