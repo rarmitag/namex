@@ -11,8 +11,6 @@ from solr_admin import models
 
 from solr_admin.models import synonym
 from solr_admin.models import virtual_word_condition
-from solr_admin.models import restricted_condition
-from solr_admin.models import restricted_word_condition
 from solr_admin.models import decision_reason
 
 from solr_admin.models import synonym_audit

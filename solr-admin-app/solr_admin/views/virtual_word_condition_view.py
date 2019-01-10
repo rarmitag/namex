@@ -1,7 +1,10 @@
 
-from flask import current_app, request
+from flask import current_app, request, get_flashed_messages
+from flask_admin import expose
+from flask_admin.babel import gettext
 from flask_admin.contrib import sqla
 from sqlalchemy import func
+from werkzeug.exceptions import abort
 
 from solr_admin import keycloak
 
@@ -9,7 +12,7 @@ from solr_admin.models.restricted_condition import RestrictedCondition
 from solr_admin.models.restricted_word import RestrictedWord
 from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 from solr_admin.models.virtual_word_condition import VirtualWordCondition
-
+from solr_admin.models.replace_word_condition import replace_word_condition
 
 class VirtualWordConditionView(sqla.ModelView):
 
@@ -74,22 +77,8 @@ class VirtualWordConditionView(sqla.ModelView):
 
         return len(data), data
 
-    # form_choices = {'cnd_text': RestrictedWord.cnd_text}
-    # At runtime determine whether or not the user has access to functionality of the view. The rule is that data is
-    # only editable in the test environment.
+    # At runtime determine whether or not the user has access to functionality of the view.
     def is_accessible(self):
-        # Disallow editing unless in the 'testing' environment.
-        editable = current_app.env == 'testing'
-        self.can_create = editable
-        self.can_delete = editable
-        self.can_edit = editable
-
-        if editable:
-            # Make columns editable.
-            self.column_editable_list = ['cnd_text','consent_required','consenting_body','instructions','allow_use','word_phrase']
-        else:
-            self.column_editable_list = []
-
         # Flask-OIDC function that states whether or not the user is logged in and has permissions.
         return keycloak.Keycloak(None).has_access()
 
@@ -98,42 +87,24 @@ class VirtualWordConditionView(sqla.ModelView):
         # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
         return keycloak.Keycloak(None).get_redirect_url(request.url)
 
-    # When the user goes to save the data, trim whitespace and put the list back into alphabetical order.
-    def on_model_change(self, form, model, is_created):
-        pass
-        # _validate_something??(model.cnd_text)
+    @expose('/ajax/update/', methods=('POST',))
+    def ajax_update(self):
+        if not self.column_editable_list:
+            abort(404)
 
-    # After saving the data create the audit log (we need to wait for a new id value when creating)
-    def after_model_change(self, form, model, is_created):
-        if is_created:
-            _create_audit_log(model, 'CREATE')
-        else:
-            _create_audit_log(model, 'UPDATE')
+        form = self.list_form()
+        fields = list(form)
 
-        from solr_admin.models.restricted_word import RestrictedWord
-        try:
-            RestrictedWord.query.filter_by(cnd_id=model.cnd_id).delete()
-            word_phrase = form.data['word_phrase']
-            for word in word_phrase.split(','):
-                self.session.add(RestrictedWord(cnd_id=model.cnd_id, word=word))
+        def value(name):
+            for field in fields:
+                if field.name == name:
+                    return field.data
 
-            self.session.commit()
-        except Exception:
-            self.session.rollback()
+        rc_words = value('rc_words')
+        cnd_id = value('list_form_pk').split(',')[0]
+
+        replace_word_condition(self.session, cnd_id, rc_words)
+
+        return gettext('Record was successfully saved.')
 
 
-
-    # After deleting the data create the audit log.
-    def after_model_delete(self, model):
-        _create_audit_log(model, 'DELETE')
-
-# Do the audit logging - we will write the complete record, not the delta (although the latter is possible).
-def _create_audit_log(model, action) -> None:
-    pass
-    #audit = restricted_condition_audit.RestrictedConditionAudit(
-    #    keycloak.Keycloak(None).get_username(), action,  model.cnd_id, model.cnd_text, model.consent_required,
-    #    model.consenting_body, model.instructions, model.allow_use)
-
-    #session = models.db.session
-    #session.add(audit)
-    #session.commit()

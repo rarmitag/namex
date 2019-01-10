@@ -1,4 +1,3 @@
-
 from . import db
 
 
@@ -6,5 +5,5 @@ from . import db
 class RestrictedWordCondition(db.Model):
     __tablename__ = 'restricted_word_condition'
 
-    word_id = db.Column(db.Integer, primary_key=True)
     cnd_id = db.Column(db.Integer, primary_key=True)
+    word_id = db.Column(db.Integer, primary_key=True)
