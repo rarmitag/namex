@@ -10,3 +10,4 @@ class VirtualWordCondition(db.Model):
 
     rc_consenting_body = Column(db.VARCHAR(195))
     rc_words = Column(db.VARCHAR(1000))
+    rc_condition_text = Column(db.VARCHAR(1000))

@@ -55,3 +55,12 @@ def test_multiple_consenting_body_update(browser, base_url, db):
     page.refresh()
 
     assert_that(page.consenting_body_of_row(2).text, equal_to('value3'))
+
+
+def test_conditions_list_displays_condition_text(browser, base_url, db):
+    seed_condition_and_words(db, consenting_body='this body needs to give approval', words='tdd, quality', condition_text='Some random text')
+    page = WordConditionPage(browser, base_url)
+
+    assert_that(page.list_size(), equal_to(1))
+    assert_that(page.condition_text_of_row(1).text, equal_to('Some random text'))
+

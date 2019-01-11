@@ -1,9 +1,19 @@
-from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 from solr_admin.models.virtual_word_condition import VirtualWordCondition
 from solr_admin.views.virtual_word_condition_view import VirtualWordConditionView
-from solr_admin.models.restricted_condition import RestrictedCondition
-from tests.support.seeds import seed_condition, seed_word, seed_full_condition, seed_word_condition
+from tests.support.seeds import *
 from hamcrest import *
+
+
+def test_column_labels(db):
+    view = VirtualWordConditionView(VirtualWordCondition, db.session)
+
+    assert_that(view.column_labels, equal_to({
+        'cnd_id': 'cnd_id',
+        'word_id': 'word_id',
+        'rc_consenting_body': 'consenting body',
+        'rc_words': 'word phrase',
+        'rc_condition_text': 'condition text'
+    }))
 
 
 def test_aggregation(db):
