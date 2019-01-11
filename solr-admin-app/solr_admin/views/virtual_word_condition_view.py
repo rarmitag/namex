@@ -13,6 +13,9 @@ from solr_admin.models.restricted_word import RestrictedWord
 from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 from solr_admin.models.virtual_word_condition import VirtualWordCondition
 from solr_admin.models.replace_word_condition import replace_word_condition
+from solr_admin.services.aggregate_word_condition import aggregate
+from solr_admin.services.virtual_word_condition_matches import record_matches
+
 
 class VirtualWordConditionView(sqla.ModelView):
 
@@ -63,37 +66,12 @@ class VirtualWordConditionView(sqla.ModelView):
         query = self._apply_pagination(query, page, page_size)
         query = query.all()
 
-        data = list()
-        previous_word_condition = None
-        for row in query:
-            rwc, rc, rw = row
-            word_condition = VirtualWordCondition(
-                cnd_id=rwc.cnd_id,
-                word_id=rwc.word_id,
-                rc_consenting_body=rc.consenting_body,
-                rc_words=rw.word_phrase,
-                rc_condition_text=rc.cnd_text,
-                rc_instructions=rc.instructions
-            )
-            keep = True
-            if search:
-                keep = self.apply_search(rc, search)
+        data = aggregate(query)
 
-            if keep:
-                if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
-                    data.append(word_condition)
-                    previous_word_condition = word_condition
-                else:
-                    previous_word_condition.rc_words += ', ' + rw.word_phrase
+        if search:
+            data = [record for record in data if record_matches(record, search)]
 
         return len(data), data
-
-    def apply_search(self, rc, search):
-        keep_candidate = False
-        terms = search.split(' ')
-        for term in terms:
-            keep_candidate = keep_candidate or term in rc.consenting_body
-        return keep_candidate
 
     # At runtime determine whether or not the user has access to functionality of the view.
     def is_accessible(self):
