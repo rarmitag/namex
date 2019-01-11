@@ -52,7 +52,7 @@ def clean_db():
     from solr_admin.models.restricted_word import RestrictedWord
     from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 
-    app = create_application(run_mode='testing')
+    app, admin = create_application(run_mode='testing')
     db = SQLAlchemy(app)
     metadata = MetaData(db.engine)
     metadata.reflect()

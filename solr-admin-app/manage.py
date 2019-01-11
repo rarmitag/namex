@@ -8,7 +8,7 @@ from solr_admin import models
 
 import logging
 
-app = create_application()
+app, admin = create_application()
 migrate = Migrate(app, db)
 manager = Manager(app)
 

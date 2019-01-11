@@ -16,6 +16,6 @@ logging.basicConfig(level=logging.DEBUG)
 monkeypatch.patch_ca_certs()
 
 # Listen on all interfaces, and the catalog Python container expects the application to be on 8080.
-application = solr_admin.create_application()
+application, admin = solr_admin.create_application()
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=8080, debug=True)
