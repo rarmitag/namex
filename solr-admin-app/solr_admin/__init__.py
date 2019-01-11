@@ -57,5 +57,4 @@ def create_application(run_mode=os.getenv('FLASK_ENV', 'production')):
     admin.add_view(restricted_condition_audit_view.RestrictedConditionAuditView(restricted_condition_audit.RestrictedConditionAudit, models.db.session))
     admin.add_view(decision_reason_audit_view.DecisionReasonAuditView(decision_reason_audit.DecisionReasonAudit, models.db.session))
 
-
-    return application
+    return application, admin
