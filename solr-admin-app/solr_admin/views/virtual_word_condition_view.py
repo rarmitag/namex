@@ -77,7 +77,7 @@ class VirtualWordConditionView(sqla.ModelView):
             )
             keep = True
             if search:
-                keep = search in rc.consenting_body
+                keep = self.apply_search(rc, search)
 
             if keep:
                 if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
@@ -87,6 +87,13 @@ class VirtualWordConditionView(sqla.ModelView):
                     previous_word_condition.rc_words += ', ' + rw.word_phrase
 
         return len(data), data
+
+    def apply_search(self, rc, search):
+        keep_candidate = False
+        terms = search.split(' ')
+        for term in terms:
+            keep_candidate = keep_candidate or term in rc.consenting_body
+        return keep_candidate
 
     # At runtime determine whether or not the user has access to functionality of the view.
     def is_accessible(self):
