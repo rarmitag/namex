@@ -56,7 +56,10 @@ class VirtualWordConditionView(sqla.ModelView):
 
     def get_list(self, page, sort_column, sort_desc, search, filters,
                  execute=True, page_size=None):
-        count, query = sqla.ModelView.get_list(self, page, sort_column, sort_desc, search, filters, True, page_size)
+
+        query = self.get_query()
+        query = self._apply_pagination(query, page, page_size)
+        query = query.all()
 
         data = list()
         previous_word_condition = None
@@ -68,12 +71,16 @@ class VirtualWordConditionView(sqla.ModelView):
                 rc_consenting_body=rc.consenting_body,
                 rc_words=rw.word_phrase
             )
+            keep = True
+            if search:
+                keep = search in rc.consenting_body
 
-            if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
-                data.append(word_condition)
-                previous_word_condition = word_condition
-            else:
-                previous_word_condition.rc_words += ', ' + rw.word_phrase
+            if keep:
+                if previous_word_condition is None or word_condition.cnd_id != previous_word_condition.cnd_id:
+                    data.append(word_condition)
+                    previous_word_condition = word_condition
+                else:
+                    previous_word_condition.rc_words += ', ' + rw.word_phrase
 
         return len(data), data
 

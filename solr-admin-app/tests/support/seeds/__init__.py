@@ -37,8 +37,9 @@ def seed_word_condition(db, cnd_id, word_id):
     db.session.commit()
 
 
-def seed_condition_with_words(db, consenting_body, words):
+def seed_condition_and_words(db, consenting_body, words):
     cnd_id = seed_condition(db, consenting_body=consenting_body)
     for word in words.split(','):
         word_id = seed_word(db, word=word.strip())
         seed_word_condition(db, cnd_id, word_id)
+
