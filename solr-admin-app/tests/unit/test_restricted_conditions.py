@@ -64,3 +64,10 @@ def test_conditions_list_displays_condition_text(browser, base_url, db):
     assert_that(page.list_size(), equal_to(1))
     assert_that(page.condition_text_of_row(1).text, equal_to('Some random text'))
 
+def test_page_displays_instructions(browser, base_url, db):
+    seed_condition_and_words(db, consenting_body='this body needs to give approval', words='tdd, quality', condition_text='Some random text', instructions='Some more instructions')
+    page = WordConditionPage(browser, base_url)
+
+    assert_that(page.list_size(), equal_to(1))
+    assert_that(page.instructions_of_row(1).text, equal_to('Some more instructions'))
+

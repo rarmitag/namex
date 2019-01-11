@@ -16,13 +16,14 @@ from solr_admin.models.replace_word_condition import replace_word_condition
 
 class VirtualWordConditionView(sqla.ModelView):
 
-    column_list = ['cnd_id', 'word_id', 'rc_consenting_body', 'rc_words', 'rc_condition_text']
+    column_list = ['cnd_id', 'word_id', 'rc_consenting_body', 'rc_words', 'rc_condition_text', 'rc_instructions']
     column_labels = {
         'cnd_id': 'cnd_id',
         'word_id': 'word_id',
         'rc_consenting_body': 'consenting body',
         'rc_words': 'word phrase',
-        'rc_condition_text': 'condition text'
+        'rc_condition_text': 'condition text',
+        'rc_instructions': 'instructions'
     }
 
     action_disallowed_list = ['delete']
@@ -71,7 +72,8 @@ class VirtualWordConditionView(sqla.ModelView):
                 word_id=rwc.word_id,
                 rc_consenting_body=rc.consenting_body,
                 rc_words=rw.word_phrase,
-                rc_condition_text=rc.cnd_text
+                rc_condition_text=rc.cnd_text,
+                rc_instructions=rc.instructions
             )
             keep = True
             if search:

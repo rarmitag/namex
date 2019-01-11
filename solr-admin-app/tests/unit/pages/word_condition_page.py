@@ -45,6 +45,9 @@ class WordConditionPage:
     def condition_text_of_row(self, index):
         return self.element('td.col-rc_condition_text ', index)
 
+    def instructions_of_row(self, index):
+        return self.element('td.col-rc_instructions ', index)
+
     def update_with_value(self, cell, value):
         cell.find_element_by_css_selector('a').click()
         cell.find_element_by_css_selector('input').clear()

@@ -12,7 +12,8 @@ def test_column_labels(db):
         'word_id': 'word_id',
         'rc_consenting_body': 'consenting body',
         'rc_words': 'word phrase',
-        'rc_condition_text': 'condition text'
+        'rc_condition_text': 'condition text',
+        'rc_instructions': 'instructions'
     }))
 
 
