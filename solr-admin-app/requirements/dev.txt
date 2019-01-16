@@ -4,3 +4,4 @@ pytest
 Pyhamcrest
 behave
 splinter
+selenium
