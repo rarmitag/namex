@@ -60,7 +60,7 @@ class WordConditionListPage:
     def delete_record(self, index):
         button = self.element('td.list-buttons-column button', index)
         button.click()
-        alert = self.browser.switch_to_alert()
+        alert = self.browser.switch_to.alert
         alert.accept()
         time.sleep(1)
 
