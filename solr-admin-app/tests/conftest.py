@@ -13,8 +13,16 @@ def port():
 
 
 @pytest.fixture(scope="session")
-def server(port):
+def server_with_real_keycloak(port):
     app = os.path.join(os.path.dirname(__file__), '..', 'app.py')
+    server = ServerDriver(name='MyServer', port=port)
+    server.start(cmd=['python', app])
+    return server
+
+
+@pytest.fixture(scope="session")
+def server_with_fake_keycloak(port):
+    app = os.path.join(os.path.dirname(__file__), '..', 'app_test.py')
     server = ServerDriver(name='MyServer', port=port)
     server.start(cmd=['python', app])
     return server
@@ -32,16 +40,24 @@ def get_browser():
     return webdriver.Firefox(executable_path=gecko)
 
 
-@pytest.fixture(scope="session")
-def browser(server):
+@pytest.fixture(scope="function")
+def browser_against_fake_keycloak(server_with_fake_keycloak):
     browser = get_browser()
     yield browser
-    browser.quit()
-    server.shutdown()
+    #browser.quit()
+    server_with_fake_keycloak.shutdown()
+
+
+@pytest.fixture(scope="function")
+def browser_against_real_keycloak(server_with_real_keycloak):
+    browser = get_browser()
+    yield browser
+    #browser.quit()
+    server_with_real_keycloak.shutdown()
 
 
 @pytest.fixture(scope="session")
-def base_url(port, server):
+def base_url(port):
     return 'http://localhost:' + str(port)
 
 
@@ -55,6 +71,7 @@ def clean_db():
     from solr_admin.models.restricted_word_condition import RestrictedWordCondition
 
     app, admin = create_application(run_mode='testing')
+
     db = SQLAlchemy(app)
     metadata = MetaData(db.engine)
     metadata.reflect()

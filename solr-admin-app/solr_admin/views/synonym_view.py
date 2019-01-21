@@ -46,24 +46,17 @@ class SynonymView(sqla.ModelView):
     # At runtime determine whether or not the user has access to functionality of the view. The rule is that data is
     # only editable in the test environment.
     def is_accessible(self):
-        # Disallow editing unless in the 'testing' environment.
-        editable = current_app.env == 'testing'
-        self.can_create = editable
-        self.can_delete = editable
-        self.can_edit = editable
-
-        if editable:
-            # Make all columns editable. [temporarily except the Boolean field "enabled" - see Flask-Admin problem 1604]
-            self.column_editable_list = ['category', 'comment', 'synonyms_text']
-        else:
-            self.column_editable_list = []
-
-        # Flask-OIDC function that states whether or not the user is logged in and has permissions.
         return keycloak.Keycloak(None).has_access()
 
     # At runtime determine what to do if the view is not accessible.
     def inaccessible_callback(self, name, **kwargs):
         # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
+        kc = keycloak.Keycloak(None)
+        logged_in = kc._oidc.user_loggedin
+
+        if logged_in:
+            return 'not authorized'
+
         return keycloak.Keycloak(None).get_redirect_url(request.url)
 
     # When the user goes to save the data, trim whitespace and put the list back into alphabetical order.

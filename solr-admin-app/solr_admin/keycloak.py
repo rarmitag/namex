@@ -28,7 +28,18 @@ class Keycloak(object):
         if logged_in:
             logging.info('logged in as %s', self.get_username())
 
-        return logged_in
+        if not logged_in:
+            return False
+
+        token = self._oidc.get_access_token()
+        if not token:
+            return False
+
+        token_info = self._oidc._get_token_info(token)
+
+        access = 'names_manager' in token_info['realm_access']['roles']
+
+        return access
 
     '''
     Gets the redirect URL that is used to transfer the browser to the identity provider.
