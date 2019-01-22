@@ -2,11 +2,10 @@ from hamcrest import *
 from solr_admin.models.synonym import Synonym
 
 
-def test_synonyms_list(browser_against_fake_keycloak, base_url, db):
+def test_synonyms_list(browser, base_url, db):
     db.session.add(Synonym(category='hello', synonyms_text='world'))
     db.session.commit()
 
-    browser = browser_against_fake_keycloak
     browser.get(base_url + '/')
     browser.find_element_by_tag_name('a').click()
     browser.find_element_by_link_text('Synonym').click()
