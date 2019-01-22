@@ -15,4 +15,4 @@ def test_word_condition_view_name():
             break
 
     assert_that(view, not_none())
-    assert_that(view.name, equal_to('Virtual Word Condition'))
+    assert_that(view.name, equal_to('Restricted Word Condition'))

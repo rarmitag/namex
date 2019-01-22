@@ -50,7 +50,7 @@ def create_application(run_mode=os.getenv('FLASK_ENV', 'production')):
     admin = flask_admin.Admin(application, name='Namex Administration', template_mode='bootstrap3')
 
     admin.add_view(synonym_view.SynonymView(synonym.Synonym, models.db.session))
-    admin.add_view(virtual_word_condition_view.VirtualWordConditionView(virtual_word_condition.VirtualWordCondition, models.db.session))
+    admin.add_view(virtual_word_condition_view.VirtualWordConditionView(virtual_word_condition.VirtualWordCondition, models.db.session, name='Restricted Word Condition'))
     admin.add_view(decision_reason_view.DecisionReasonView(decision_reason.DecisionReason, models.db.session))
 
     admin.add_view(synonym_audit_view.SynonymAuditView(synonym_audit.SynonymAudit, models.db.session))
