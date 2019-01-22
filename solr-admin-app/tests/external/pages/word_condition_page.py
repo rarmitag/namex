@@ -12,7 +12,7 @@ class WordConditionListPage:
         self.refresh()
 
     def refresh(self):
-        self.browser.find_element_by_link_text('Virtual Word Condition').click()
+        self.browser.find_element_by_link_text('Restricted Word Condition').click()
 
     def list_size(self):
         rows_css = 'table.model-list tbody tr '

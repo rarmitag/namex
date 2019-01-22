@@ -1,7 +1,7 @@
 import time
 
 
-class WordConditionCreationPage:
+class SynonymCreationPage:
 
     def __init__(self, browser, base_url):
         self.browser = browser
@@ -10,7 +10,7 @@ class WordConditionCreationPage:
         self.refresh()
 
     def refresh(self):
-        self.browser.find_element_by_link_text('Restricted Word Condition').click()
+        self.browser.find_element_by_link_text('Synonym').click()
         self.browser.find_element_by_link_text('Create').click()
 
     def fill(self, id, value):

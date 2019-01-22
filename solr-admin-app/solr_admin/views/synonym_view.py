@@ -1,7 +1,7 @@
 
 import re
 
-from flask import current_app, request
+from flask import request
 from flask_admin.contrib import sqla
 from wtforms import validators
 
@@ -12,6 +12,9 @@ from solr_admin.models import synonym_audit
 
 
 # The customized ModelView that is used for working with the synonyms.
+from solr_admin.services.get_stems import get_stems
+
+
 class SynonymView(sqla.ModelView):
     # We're unlikely to do multiple deletes, so just get rid of the checkboxes and the drop down for delete.
     action_disallowed_list = ['delete']
@@ -27,6 +30,7 @@ class SynonymView(sqla.ModelView):
 
     # For some reason this needs to be initialized, but we will override it in is_accessible.
     column_editable_list = ['category', 'comment', 'synonyms_text']
+    form_columns = ['category', 'comment', 'synonyms_text']
 
     # Allow the user to filter on the category column.
     column_filters = ['category']
@@ -71,7 +75,8 @@ class SynonymView(sqla.ModelView):
         else:
             _create_audit_log(model, 'UPDATE')
 
-        solr.reload_solr_cores()
+        model.stems_text = get_stems(model.synonyms_text)
+        self.session.commit()
 
     # After deleting the data create the audit log.
     def after_model_delete(self, model):
