@@ -3,7 +3,7 @@ import time
 from hamcrest import *
 
 
-def test_authentification_is_needed(browser_against_real_keycloak, base_url):
+def authentification_is_needed(browser_against_real_keycloak, base_url):
     browser = browser_against_real_keycloak
     browser.get(base_url + '/admin/synonym')
     username = browser.find_element_by_css_selector('input#username')
@@ -19,7 +19,7 @@ def test_authentification_is_needed(browser_against_real_keycloak, base_url):
     assert_that(browser.current_url, equal_to(base_url + '/admin/synonym/'))
 
 
-def test_has_access_from_keycloak(browser_against_real_keycloak, base_url):
+def has_access_from_keycloak(browser_against_real_keycloak, base_url):
     browser = browser_against_real_keycloak
     browser.get(base_url + '/admin/synonym')
     username = browser.find_element_by_css_selector('input#username')
