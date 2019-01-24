@@ -1,10 +1,8 @@
 import os
 import pytest
 from selenium import webdriver
-
-from solr_admin.models.virtual_word_condition import VirtualWordCondition
+from sqlalchemy import engine_from_config
 from tests.external.support.driver.server_driver import ServerDriver
-from sqlalchemy.schema import MetaData, DropConstraint
 
 
 @pytest.fixture(scope="session")
@@ -66,9 +64,11 @@ def clean_db():
     from flask_sqlalchemy import SQLAlchemy
     from solr_admin import create_application
     from solr_admin.models.synonym import Synonym
+    from solr_admin.models.synonym_audit import SynonymAudit
     from solr_admin.models.restricted_condition import RestrictedCondition
     from solr_admin.models.restricted_word import RestrictedWord
     from solr_admin.models.restricted_word_condition import RestrictedWordCondition
+    from solr_admin.models.virtual_word_condition import VirtualWordCondition
     from tests.external.support.fake_oidc import FakeOidc
     from solr_admin.keycloak import Keycloak
 
@@ -76,19 +76,18 @@ def clean_db():
     app, admin = create_application(run_mode='testing')
 
     db = SQLAlchemy(app)
-    metadata = MetaData(db.engine)
-    metadata.reflect()
-    for table in metadata.tables.values():
-        for fk in table.foreign_keys:
-            db.engine.execute(DropConstraint(fk.constraint))
-    metadata.drop_all()
-    db.drop_all()
 
-    Synonym.metadata.create_all(bind=db.engine)
-    RestrictedCondition.metadata.create_all(bind=db.engine)
-    RestrictedWord.metadata.create_all(bind=db.engine)
-    RestrictedWordCondition.metadata.create_all(bind=db.engine)
-    VirtualWordCondition.metadata.create_all(bind=db.engine)
+    synonyms_db = engine_from_config({'sqlalchemy.url': app.config['SQLALCHEMY_BINDS']['synonyms']})
+    Synonym.metadata.drop_all(bind=synonyms_db)
+    Synonym.metadata.create_all(bind=synonyms_db, tables=[Synonym.metadata.tables['synonym']])
+    SynonymAudit.metadata.create_all(bind=synonyms_db, tables=[SynonymAudit.metadata.tables['synonym_audit']])
+
+    namex_db = engine_from_config({'sqlalchemy.url': app.config['SQLALCHEMY_DATABASE_URI']})
+    RestrictedCondition.metadata.drop_all(bind=namex_db)
+    RestrictedCondition.metadata.create_all(bind=namex_db, tables=[RestrictedCondition.metadata.tables['restricted_condition']])
+    RestrictedWord.metadata.create_all(bind=namex_db, tables=[RestrictedWord.metadata.tables['restricted_word']])
+    RestrictedWordCondition.metadata.create_all(bind=namex_db, tables=[RestrictedWordCondition.metadata.tables['restricted_word_condition']])
+    VirtualWordCondition.metadata.create_all(bind=namex_db, tables=[VirtualWordCondition.metadata.tables['virtual_word_condition']])
 
     return db
 
