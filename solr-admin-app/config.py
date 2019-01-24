@@ -40,6 +40,10 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'postgresql://{user}:{password}@{host}:{port}/{name}'.format(
         user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port=int(DATABASE_PORT), name=DATABASE_NAME)
 
+    SQLALCHEMY_BINDS = {
+        'synonyms': 'postgresql://:@localhost:5432/synonyms'
+    }
+
     DEBUG = False
     TESTING = False
 

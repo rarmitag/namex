@@ -4,6 +4,7 @@ from sqlalchemy.schema import Column
 
 
 class VirtualWordCondition(db.Model):
+    __tablename__ = 'virtual_word_condition'
 
     id = Column(db.Integer, primary_key=True, autoincrement=True)
 

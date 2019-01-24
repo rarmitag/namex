@@ -13,6 +13,7 @@ def _to_string(string):
 # The class that corresponds to the database table for synonym audits.
 class SynonymAudit(db.Model):
     __tablename__ = 'synonym_audit'
+    __bind_key__ = 'synonyms'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(100))
