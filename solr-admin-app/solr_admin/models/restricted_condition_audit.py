@@ -15,8 +15,8 @@ class RestrictedConditionAudit(db.Model):
     __tablename__ = 'restricted_condition_audit'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    timestamp = db.Column(db.DateTime)
     username = db.Column(db.String(100))
+    timestamp = db.Column(db.DateTime)
     action = db.Column(db.String(10))
     cnd_id = db.Column(db.Integer)
     cnd_text = db.Column(db.String(1000))
@@ -28,8 +28,8 @@ class RestrictedConditionAudit(db.Model):
     def __init__(
             self, username: str, action: str, cnd_id: int, cnd_text: str,
             consent_required: str, consenting_body: str, instructions: str, allow_use: str ) -> None:
-        self.timestamp = datetime.datetime.now()
         self.username = username
+        self.timestamp = datetime.datetime.now()
         self.action = action
         self.cnd_id = cnd_id
         self.cnd_text = cnd_text
