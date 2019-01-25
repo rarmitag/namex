@@ -1,3 +1,4 @@
+import os
 import json
 from urllib import request
 
@@ -25,7 +26,8 @@ def get_stems(synonym_list):
 
 
 def get_stems_url(synonym_list):
-    solr_base_url = 'https://namex-solr-dev.pathfinder.gov.bc.ca/solr/possible.conflicts/analysis/field?analysis.fieldvalue='
+    solr_url = os.getenv('SOLR_URL')
+    solr_base_url = solr_url + '/solr/possible.conflicts/analysis/field?analysis.fieldvalue='
     query = solr_base_url + '{words}&analysis.fieldname=name&wt=json&indent=true'.format(words=synonym_list.strip()).replace(' ', '%20')
 
     return query
