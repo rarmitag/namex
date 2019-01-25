@@ -31,17 +31,31 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # PostgreSQL Connection information.
-    DATABASE_USER = os.getenv('SOLR_ADMIN_APP_DATABASE_USERNAME', '')
-    DATABASE_PASSWORD = os.getenv('SOLR_ADMIN_APP_DATABASE_PASSWORD', '')
-    DATABASE_HOST = os.getenv('SOLR_ADMIN_APP_DATABASE_HOST', '')
-    DATABASE_PORT = os.getenv('SOLR_ADMIN_APP_DATABASE_PORT', '5432')
-    DATABASE_NAME = os.getenv('SOLR_ADMIN_APP_DATABASE_NAME', '')
+    DATABASE_USER = os.getenv('NAMES_ADMIN_DATABASE_USERNAME', '')
+    DATABASE_PASSWORD = os.getenv('NAMES_ADMIN_DATABASE_PASSWORD', '')
+    DATABASE_HOST = os.getenv('NAMES_ADMIN_DATABASE_HOST', '')
+    DATABASE_PORT = os.getenv('NAMES_ADMIN_DATABASE_PORT', '5432')
+    DATABASE_NAME = os.getenv('NAMES_ADMIN_DATABASE_NAME', '')
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://{user}:{password}@{host}:{port}/{name}'.format(
-        user=DATABASE_USER, password=DATABASE_PASSWORD, host=DATABASE_HOST, port=int(DATABASE_PORT), name=DATABASE_NAME)
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        host=DATABASE_HOST,
+        port=int(DATABASE_PORT),
+        name=DATABASE_NAME)
 
+    SYNONYMS_DATABASE_USER = os.getenv('NAMES_ADMIN_SYNONYMS_DATABASE_USERNAME', '')
+    SYNONYMS_DATABASE_PASSWORD = os.getenv('NAMES_ADMIN_SYNONYMS_DATABASE_PASSWORD', '')
+    SYNONYMS_DATABASE_HOST = os.getenv('NAMES_ADMIN_SYNONYMS_DATABASE_HOST', '')
+    SYNONYMS_DATABASE_PORT = os.getenv('NAMES_ADMIN_SYNONYMS_DATABASE_PORT', '5432')
+    SYNONYMS_DATABASE_NAME = os.getenv('NAMES_ADMIN_SYNONYMS_DATABASE_NAME', 'synonyms')
     SQLALCHEMY_BINDS = {
-        'synonyms': 'postgresql://:@localhost:5432/synonyms'
+        'synonyms': 'postgresql://{user}:{password}@{host}:{port}/{name}'.format(
+            user=SYNONYMS_DATABASE_USER,
+            password=SYNONYMS_DATABASE_PASSWORD,
+            host=SYNONYMS_DATABASE_HOST,
+            port=int(SYNONYMS_DATABASE_PORT),
+            name=SYNONYMS_DATABASE_NAME)
     }
 
     DEBUG = False
