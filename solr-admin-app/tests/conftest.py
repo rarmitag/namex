@@ -63,12 +63,20 @@ def base_url(port):
 def clean_db():
     from flask_sqlalchemy import SQLAlchemy
     from solr_admin import create_application
+
     from solr_admin.models.synonym import Synonym
     from solr_admin.models.synonym_audit import SynonymAudit
+
     from solr_admin.models.restricted_condition import RestrictedCondition
     from solr_admin.models.restricted_word import RestrictedWord
     from solr_admin.models.restricted_word_condition import RestrictedWordCondition
+
+    from solr_admin.models.decision_reason import DecisionReason
+    from solr_admin.models.decision_reason_audit import DecisionReasonAudit
+
     from solr_admin.models.virtual_word_condition import VirtualWordCondition
+    from solr_admin.models.restricted_condition_audit import RestrictedConditionAudit
+
     from tests.external.support.fake_oidc import FakeOidc
     from solr_admin.keycloak import Keycloak
 
@@ -87,7 +95,12 @@ def clean_db():
     RestrictedCondition.metadata.create_all(bind=namex_db, tables=[RestrictedCondition.metadata.tables['restricted_condition']])
     RestrictedWord.metadata.create_all(bind=namex_db, tables=[RestrictedWord.metadata.tables['restricted_word']])
     RestrictedWordCondition.metadata.create_all(bind=namex_db, tables=[RestrictedWordCondition.metadata.tables['restricted_word_condition']])
+
+    DecisionReason.metadata.create_all(bind=namex_db, tables=[DecisionReason.metadata.tables['decision_reason']])
+    DecisionReasonAudit.metadata.create_all(bind=namex_db, tables=[DecisionReasonAudit.metadata.tables['decision_reason_audit']])
+
     VirtualWordCondition.metadata.create_all(bind=namex_db, tables=[VirtualWordCondition.metadata.tables['virtual_word_condition']])
+    RestrictedConditionAudit.metadata.create_all(bind=namex_db, tables=[RestrictedConditionAudit.metadata.tables['restricted_condition_audit']])
 
     return db
 

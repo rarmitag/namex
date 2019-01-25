@@ -20,19 +20,21 @@ class RestrictedConditionAudit(db.Model):
     action = db.Column(db.String(10))
     cnd_id = db.Column(db.Integer)
     cnd_text = db.Column(db.String(1000))
-    consent_required = db.Column(db.VARCHAR(1))
+    words = db.Column(db.VARCHAR(1000))
+    consent_required = db.Column(db.Boolean(), default=True)
     consenting_body = db.Column(db.VARCHAR(195))
     instructions = db.Column(db.VARCHAR(1000))
-    allow_use = db.Column(db.VARCHAR(1))
+    allow_use = db.Column(db.Boolean(), default=True)
 
     def __init__(
-            self, username: str, action: str, cnd_id: int, cnd_text: str,
-            consent_required: str, consenting_body: str, instructions: str, allow_use: str ) -> None:
+            self, username: str, action: str, cnd_id: int, cnd_text: str, words: str,
+            consent_required: bool, consenting_body: str, instructions: str, allow_use: bool ) -> None:
         self.username = username
         self.timestamp = datetime.datetime.now()
         self.action = action
         self.cnd_id = cnd_id
         self.cnd_text = cnd_text
+        self.words = words
         self.consent_required = consent_required
         self.consenting_body = consenting_body
         self.instructions = instructions
