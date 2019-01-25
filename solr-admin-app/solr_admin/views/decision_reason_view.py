@@ -44,28 +44,20 @@ class DecisionReasonView(sqla.ModelView):
     # Use a custom list.html that provides a page size drop down with extra choices.
     list_template = 'generic_list.html'
 
-    #form_choices = {'cnd_text': RestrictedWord.cnd_text}
-    # At runtime determine whether or not the user has access to functionality of the view. The rule is that data is
-    # only editable in the test environment.
+    # Flask-OIDC function that states whether or not the user is logged in and has permissions.
     def is_accessible(self):
-        # Disallow editing unless in the 'testing' environment.
-        editable = current_app.env == 'testing'
-        self.can_create = editable
-        self.can_delete = editable
-        self.can_edit = editable
-
-        if editable:
-            # Make columns editable.
-            self.column_editable_list = ['name','reason']
-        else:
-            self.column_editable_list = []
-
         # Flask-OIDC function that states whether or not the user is logged in and has permissions.
         return keycloak.Keycloak(None).has_access()
 
     # At runtime determine what to do if the view is not accessible.
     def inaccessible_callback(self, name, **kwargs):
         # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
+        kc = keycloak.Keycloak(None)
+        logged_in = kc._oidc.user_loggedin
+
+        if logged_in:
+            return 'not authorized'
+
         return keycloak.Keycloak(None).get_redirect_url(request.url)
 
     # When the user goes to save the data, trim whitespace and put the list back into alphabetical order.

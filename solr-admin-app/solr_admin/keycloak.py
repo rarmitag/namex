@@ -26,6 +26,7 @@ class Keycloak(object):
         logged_in = self._oidc.user_loggedin
 
         if logged_in:
+            print('logged in as %s', self.get_username())
             logging.info('logged in as %s', self.get_username())
 
         if not logged_in:
@@ -33,9 +34,12 @@ class Keycloak(object):
 
         token = self._oidc.get_access_token()
         if not token:
+            logging.info('... but no token')
             return False
 
         token_info = self._oidc._get_token_info(token)
+        print(token_info['realm_access']['roles'])
+        logging.info(token_info['realm_access']['roles'])
 
         access = 'names_manager' in token_info['realm_access']['roles']
 

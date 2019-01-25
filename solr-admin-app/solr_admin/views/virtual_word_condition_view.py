@@ -45,6 +45,12 @@ class VirtualWordConditionView(sqla.ModelView):
     # At runtime determine what to do if the view is not accessible.
     def inaccessible_callback(self, name, **kwargs):
         # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
+        kc = keycloak.Keycloak(None)
+        logged_in = kc._oidc.user_loggedin
+
+        if logged_in:
+            return 'not authorized'
+
         return keycloak.Keycloak(None).get_redirect_url(request.url)
 
     def after_model_change(self, form, model, is_created):

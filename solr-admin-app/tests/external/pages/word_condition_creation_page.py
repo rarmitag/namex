@@ -5,11 +5,11 @@ class WordConditionCreationPage:
 
     def __init__(self, browser, base_url):
         self.browser = browser
-        self.browser.get(base_url + '/')
-        self.browser.find_element_by_tag_name('a').click()
+        self.base_url = base_url
         self.refresh()
 
     def refresh(self):
+        self.browser.get(self.base_url + '/admin/virtualwordcondition')
         self.browser.find_element_by_link_text('Restricted Word Condition').click()
         self.browser.find_element_by_link_text('Create').click()
 
