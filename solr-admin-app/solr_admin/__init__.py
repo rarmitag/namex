@@ -23,7 +23,7 @@ from solr_admin.views import virtual_word_condition_view
 from solr_admin.views import decision_reason_view
 
 from solr_admin.views import synonym_audit_view
-from solr_admin.views import restricted_condition_audit_view
+from solr_admin.views import restricted_word_condition_audit_view
 from solr_admin.views import decision_reason_audit_view
 
 
@@ -54,7 +54,7 @@ def create_application(run_mode=os.getenv('FLASK_ENV', 'production')):
     admin.add_view(decision_reason_view.DecisionReasonView(decision_reason.DecisionReason, models.db.session))
 
     admin.add_view(synonym_audit_view.SynonymAuditView(synonym_audit.SynonymAudit, models.db.session))
-    admin.add_view(restricted_condition_audit_view.RestrictedConditionAuditView(restricted_condition_audit.RestrictedConditionAudit, models.db.session))
+    admin.add_view(restricted_word_condition_audit_view.RestrictedConditionAuditView(restricted_condition_audit.RestrictedConditionAudit, models.db.session))
     admin.add_view(decision_reason_audit_view.DecisionReasonAuditView(decision_reason_audit.DecisionReasonAudit, models.db.session))
 
     return application, admin
