@@ -16,7 +16,7 @@ class Config(object):
     SECRET_KEY = 'My Secret'
 
     # Normal Keycloak parameters.
-    OIDC_CLIENT_SECRETS = os.getenv('SOLR_ADMIN_APP_OIDC_CLIENT_SECRETS', 'keycloak_client_secrets/secrets.json')
+    OIDC_CLIENT_SECRETS = os.getenv('SOLR_ADMIN_APP_OIDC_CLIENT_SECRETS', 'solr-admin-app/keycloak_client_secrets/secrets.json')
     OIDC_SCOPES = ['openid', 'email', 'profile']
     OIDC_VALID_ISSUERS = [os.getenv('SOLR_ADMIN_APP_OIDC_VALID_ISSUERS', 'http://localhost:8081/auth/realms/master')]
     OVERWRITE_REDIRECT_URI = os.getenv('SOLR_ADMIN_APP_OVERWRITE_REDIRECT_URI', '')

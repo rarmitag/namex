@@ -1,13 +1,17 @@
 import time
-from selenium.webdriver.common.by import By
+from hamcrest import *
+
 
 class SynonymCreationPage:
 
     def __init__(self, browser, base_url):
         self.browser = browser
+        self.base_url = base_url
         self.refresh()
 
     def refresh(self):
+        self.browser.get(self.base_url + '/admin/synonym')
+        assert_that(self.browser.find_element_by_tag_name('body').text, contains_string('Namex Administration'))
         self.browser.find_element_by_link_text('Synonym').click()
         self.browser.find_element_by_link_text('Create').click()
 

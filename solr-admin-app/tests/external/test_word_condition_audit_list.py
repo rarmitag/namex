@@ -12,8 +12,7 @@ def test_word_conditon_audit_creation(browser, base_url, db):
     page.save()
 
 
-    browser.get(base_url + '/')
-    browser.find_element_by_tag_name('a').click()
+    browser.get(base_url + '/admin/restrictedconditionaudit')
     browser.find_element_by_link_text('Restricted Condition Audit').click()
     selection = browser.find_elements_by_css_selector('li.active')
 

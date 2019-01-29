@@ -14,7 +14,7 @@ secret = client_info_json['credentials']['secret']
 print('secret=' + secret)
 
 dotenv.load_dotenv(dotenv.find_dotenv())
-secrets_json_file = os.getenv('SOLR_ADMIN_APP_OIDC_CLIENT_SECRETS', 'keycloak_client_secrets/secrets.json')
+secrets_json_file = os.getenv('SOLR_ADMIN_APP_OIDC_CLIENT_SECRETS', 'solr-admin-app/keycloak_client_secrets/secrets.json')
 print(secrets_json_file)
 assert secrets_json_file is not None
 

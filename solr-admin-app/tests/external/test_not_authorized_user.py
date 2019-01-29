@@ -1,35 +1,56 @@
 import pytest
 from hamcrest import *
+from selenium.webdriver.firefox.webdriver import WebDriver
+from selenium.webdriver.firefox.options import Options
 
-from tests.conftest import get_browser, connect_with
+from tests.conftest import get_browser, connect_with, gecko_driver
+import os
+
+from tests.external.support.driver.server_driver import ServerDriver
 
 
 @pytest.fixture(scope="session")
-def new_server(server):
+def new_server(port):
+    app = os.path.join(os.path.dirname(__file__), '..', '..', 'app.py')
+    server = ServerDriver(name='MyServer', port=port+10)
+    server.start(cmd=['python', app, str(port+10)])
     yield server
     server.shutdown()
 
 
 @pytest.fixture(scope="session")
-def new_browser(new_server, base_url):
+def second_base_url(port):
+    return 'http://localhost:' + str(port+10)
+
+
+@pytest.fixture(scope="session")
+def new_browser(new_server, second_base_url):
     browser = get_browser()
-    browser.get(base_url + '/admin/synonym')
+    browser.get(second_base_url + '/admin/synonym')
     connect_with(browser, login='names-no-admin-access')
     yield browser
     browser.quit()
 
 
-def test_cannot_access_synonyms(new_browser, base_url):
+def get_browser():
+    options = Options()
+    options.headless = True
+    browser = WebDriver(options=options, executable_path=(gecko_driver()))
+
+    return browser
+
+
+def test_cannot_access_synonyms(new_browser, second_base_url):
     browser = new_browser
-    browser.get(base_url + '/admin/synonym')
+    browser.get(second_base_url + '/admin/synonym')
     body = browser.find_element_by_tag_name('body')
 
     assert_that(body.text, contains_string('not authorized'))
 
 
-def test_cannot_access_virtual_word_condition(new_browser, base_url):
+def test_cannot_access_virtual_word_condition(new_browser, second_base_url):
     browser = new_browser
-    browser.get(base_url + '/admin/virtualwordcondition')
+    browser.get(second_base_url + '/admin/virtualwordcondition')
     body = browser.find_element_by_tag_name('body')
 
     assert_that(body.text, contains_string('not authorized'))

@@ -1,4 +1,5 @@
 import time
+from hamcrest import *
 
 
 class WordConditionCreationPage:
@@ -10,6 +11,7 @@ class WordConditionCreationPage:
 
     def refresh(self):
         self.browser.get(self.base_url + '/admin/virtualwordcondition')
+        assert_that(self.browser.find_element_by_tag_name('body').text, contains_string('Namex Administration'))
         self.browser.find_element_by_link_text('Restricted Word Condition').click()
         self.browser.find_element_by_link_text('Create').click()
 

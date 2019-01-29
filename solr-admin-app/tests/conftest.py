@@ -2,7 +2,7 @@ import os
 import time
 
 import pytest
-from selenium import webdriver
+from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.firefox.options import Options
 from sqlalchemy import engine_from_config
 from tests.external.support.driver.server_driver import ServerDriver
@@ -25,7 +25,7 @@ def get_browser():
 
     options = Options()
     options.headless = True
-    browser = webdriver.Firefox(options=options, executable_path=(gecko_driver()))
+    browser = WebDriver(options=options, executable_path=(gecko_driver()))
 
     return browser
 

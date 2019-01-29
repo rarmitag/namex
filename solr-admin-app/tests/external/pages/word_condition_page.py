@@ -1,6 +1,6 @@
 import time
-
 from selenium.webdriver.common.by import By
+from hamcrest import *
 
 
 class WordConditionListPage:
@@ -12,6 +12,7 @@ class WordConditionListPage:
 
     def refresh(self):
         self.browser.get(self.base_url + '/admin/virtualwordcondition')
+        assert_that(self.browser.find_element_by_tag_name('body').text, contains_string('Namex Administration'))
         self.browser.find_element_by_link_text('Restricted Word Condition').click()
 
     def list_size(self):

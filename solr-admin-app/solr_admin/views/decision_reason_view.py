@@ -1,16 +1,13 @@
 
-import re
-
-from flask import current_app, request
-from flask_admin.contrib import sqla
-from wtforms import validators
-
 from solr_admin import keycloak
 from solr_admin import models
 from solr_admin.models import decision_reason_audit
 
 # The customized ModelView that is used for working with the decision reason.
-class DecisionReasonView(sqla.ModelView):
+from solr_admin.views.secured_view import SecuredView
+
+
+class DecisionReasonView(SecuredView):
 
     column_list = ['name','reason']
 
@@ -43,22 +40,6 @@ class DecisionReasonView(sqla.ModelView):
 
     # Use a custom list.html that provides a page size drop down with extra choices.
     list_template = 'generic_list.html'
-
-    # Flask-OIDC function that states whether or not the user is logged in and has permissions.
-    def is_accessible(self):
-        # Flask-OIDC function that states whether or not the user is logged in and has permissions.
-        return keycloak.Keycloak(None).has_access()
-
-    # At runtime determine what to do if the view is not accessible.
-    def inaccessible_callback(self, name, **kwargs):
-        # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
-        kc = keycloak.Keycloak(None)
-        logged_in = kc._oidc.user_loggedin
-
-        if logged_in:
-            return 'not authorized'
-
-        return keycloak.Keycloak(None).get_redirect_url(request.url)
 
     # When the user goes to save the data, trim whitespace and put the list back into alphabetical order.
     def on_model_change(self, form, model, is_created):

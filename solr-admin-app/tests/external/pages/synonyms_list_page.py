@@ -1,10 +1,16 @@
+from hamcrest import *
+
+
 class SynonymsListPage:
 
-    def __init__(self, browser):
+    def __init__(self, browser, base_url):
         self.browser = browser
+        self.base_url = base_url
         self.refresh()
 
     def refresh(self):
+        self.browser.get(self.base_url + '/admin/synonym')
+        assert_that(self.browser.find_element_by_tag_name('body').text, contains_string('Namex Administration'))
         self.browser.find_element_by_link_text('Synonym').click()
 
     def list_size(self):

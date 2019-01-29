@@ -20,28 +20,25 @@ class Keycloak(object):
             Keycloak._oidc = flask_oidc.OpenIDConnect(application)
 
     '''
+    Determines whether or not the user is logged in
+    '''
+    def is_logged_in(self) -> bool:
+        return self._oidc.user_loggedin
+
+    '''
     Determines whether or not the user is authorized to use the application. True if the user is logged in.
     '''
     def has_access(self) -> bool:
-        logged_in = self._oidc.user_loggedin
-
-        if logged_in:
-            print('logged in as %s', self.get_username())
-            logging.info('logged in as %s', self.get_username())
-
-        if not logged_in:
-            return False
-
         token = self._oidc.get_access_token()
         if not token:
-            logging.info('... but no token')
             return False
 
         token_info = self._oidc._get_token_info(token)
-        print(token_info['realm_access']['roles'])
-        logging.info(token_info['realm_access']['roles'])
+        if not token_info['realm_access']:
+            return False
 
-        access = 'names_manager' in token_info['realm_access']['roles']
+        roles_ = token_info['realm_access']['roles']
+        access = 'names_manager' in roles_
 
         return access
 
