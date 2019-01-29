@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d5056118-faa1-4004-906f-b4524c337fe2",
+		"_postman_id": "8c51af7c-6750-4018-9313-060211afb807",
 		"name": "namex-pipeline-test",
 		"description": "# Introduction\nWhat does your API do?\n\n# Overview\nThings that the developers should know about\n\n# Authentication\nWhat is the preferred way of using the API?\n\n# Error Codes\nWhat errors and status codes can a user expect?\n\n# Rate limit\nIs there a limit to the number of requests an user can send?",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -20,7 +20,7 @@
 									"// If the \"postman_bdd_path\" environment variable is set, then we'll use it.",
 									"// Otherwise, we'll default to the published version",
 									"if (!environment.postman_bdd_path) {",
-									"    postman.setGlobalVariable('postman_bdd_path', 'http://bigstickcarpet.com/postman-bdd/dist/postman-bdd.min.js');",
+									"    postman.setGlobalVariable('postman_bdd_path', 'https://raw.githubusercontent.com/bcgov/postman-bdd/master/dist/postman-bdd.min.js');",
 									"}",
 									""
 								]
@@ -837,7 +837,6 @@
 							"listen": "test",
 							"script": {
 								"id": "bdd7e3b6-cdce-4354-931e-270f8e0e44ad",
-								"type": "text/javascript",
 								"exec": [
 									"eval(globals.postmanBDD);",
 									"",
@@ -846,8 +845,6 @@
 									"    pm.expect(jsonData.nameRequest).to.eql( pm.environment.get(\"queued_nr\"));",
 									"});",
 									"",
-									"pm.environment.unset(\"queued_nr\");  ",
-									"",
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
 									"});",
@@ -855,7 +852,8 @@
 									"pm.test(\"Response time is less than 8000ms\", function () {",
 									"    pm.expect(pm.response.responseTime).to.be.below(8000);",
 									"});"
-								]
+								],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -883,6 +881,88 @@
 								"queues",
 								"@me",
 								"oldest"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "requests/NR # - change state to DRAFT",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "36e019ae-a7c4-4599-8631-564ad3d11ef0",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "346c9a5d-ee8f-48cd-9b21-bad29baf9ecb",
+								"exec": [
+									"eval(globals.postmanBDD);",
+									"",
+									"tests[\"Response time is acceptable\"] = responseTime < 8000;",
+									"",
+									"it('Should be an success response', () => {",
+									"    response.ok.should.be.true;            // 2XX",
+									"    response.error.should.be.false;          // 4XX or 5XX",
+									"    response.clientError.should.be.false;    // 4XX",
+									"    response.serverError.should.be.false;   // 5XX",
+									"    response.should.have.status(200);",
+									"    response.statusType.should.equal(2);",
+									"});",
+									"",
+									"it('Should return JSON', () => {",
+									"    response.should.be.json;",
+									"    response.should.have.header('Content-Type', 'application/json');",
+									"    response.type.should.equal('application/json');",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"it('Should contain \\'message\\' confirming patch', () => {",
+									"    response.body.should.be.an('object').with.keys(['message']);",
+									"    jsonData.message.should.include('- patched');",
+									"});",
+									"",
+									"pm.environment.unset(\"queued_nr\");  ",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"state\": \"INPROGRESS\"}"
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/requests/{{queued_nr}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"requests",
+								"{{queued_nr}}"
 							]
 						}
 					},
@@ -1454,7 +1534,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum', 'expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr', 'previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId', 'xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum', 'expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr', 'previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId', 'xproJurisdiction']);",
 									"});",
 									"",
 									"var response = pm.response.json();",
@@ -1527,7 +1607,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
 									"});",
 									"",
 									"it(\"Should return updated changes in the body\", () => {",
@@ -1564,7 +1644,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
+							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"hasBeenRest\": false,\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
 						},
 						"url": {
 							"raw": "{{url}}/api/v1/requests/{{NR}}",
@@ -1625,7 +1705,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum', 'expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr', 'previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId', 'xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum', 'expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr', 'previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId', 'xproJurisdiction']);",
 									"});",
 									"",
 									"it(\"Should return updated changes by previous PUT\", () => {",
@@ -1821,7 +1901,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
 									"});",
 									"",
 									"it(\"Should be marked as furnished in prep for RESET testing (step 2)\", () => {",
@@ -1847,7 +1927,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"Y\",\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
+							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"Y\",\n    \"hasBeenReset\": false,\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
 						},
 						"url": {
 							"raw": "{{url}}/api/v1/requests/{{NR}}",
@@ -1898,7 +1978,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
 									"});",
 									"",
 									"it(\"Should be unfurnished\", () => {",
@@ -1930,7 +2010,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
+							"raw": "{\n    \"additionalInfo\": \"TEST\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"TEST\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"hasBeenReset\": false,\n    \"id\": 1051,\n    \"lastUpdate\": \"Mon, 24 Sep 2018 18:24:15 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"TEST\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"TEST\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"INPROGRESS\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
 						},
 						"url": {
 							"raw": "{{url}}/api/v1/requests/{{NR}}",
@@ -1945,6 +2025,87 @@
 							]
 						},
 						"description": "Test RESET"
+					},
+					"response": []
+				},
+				{
+					"name": "requests/NR # - change state to INPROGRESS",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "36e019ae-a7c4-4599-8631-564ad3d11ef0",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "346c9a5d-ee8f-48cd-9b21-bad29baf9ecb",
+								"exec": [
+									"eval(globals.postmanBDD);",
+									"",
+									"tests[\"Response time is acceptable\"] = responseTime < 8000;",
+									"",
+									"it('Should be an success response', () => {",
+									"    response.ok.should.be.true;            // 2XX",
+									"    response.error.should.be.false;          // 4XX or 5XX",
+									"    response.clientError.should.be.false;    // 4XX",
+									"    response.serverError.should.be.false;   // 5XX",
+									"    response.should.have.status(200);",
+									"    response.statusType.should.equal(2);",
+									"});",
+									"",
+									"it('Should return JSON', () => {",
+									"    response.should.be.json;",
+									"    response.should.have.header('Content-Type', 'application/json');",
+									"    response.type.should.equal('application/json');",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"it('Should contain \\'message\\' confirming patch', () => {",
+									"    response.body.should.be.an('object').with.keys(['message']);",
+									"    jsonData.message.should.include('- patched');",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"state\": \"INPROGRESS\"}"
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/requests/{{NR}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"requests",
+								"{{NR}}"
+							]
+						},
+						"description": "Must change to INPROGRESS before HOLD (next call) because DRAFT to HOLD is not a valid transition."
 					},
 					"response": []
 				},
@@ -1982,7 +2143,7 @@
 									"});",
 									"",
 									"it(\"Should return the required fields for an NR\", () => {",
-									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
+									"    response.body.should.be.an('object').with.keys(['additionalInfo','applicants','comments','consentFlag','corpNum','expirationDate','furnished','hasBeenReset','id','lastUpdate','names','natureBusinessInfo','nrNum','nwpta','previousNr','previousRequestId','previousStateCd', 'priorityCd','priorityDate','requestTypeCd','state','submitCount','submittedDate','submitter_userid','userId','xproJurisdiction']);",
 									"});",
 									"",
 									"it(\"Should return old values for this NR\", () => {",
@@ -2015,7 +2176,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"additionalInfo\": \"This is additional info entered by the applicant.\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"qqqGerald\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"id\": 1051,\n    \"lastUpdate\": \"Thu, 20 Sep 2018 23:02:17 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"STRANGWAY & SONS ACCOUNTING SERVICES\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"Corporate Accounting Firm\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"HOLD\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
+							"raw": "{\n    \"additionalInfo\": \"This is additional info entered by the applicant.\",\n    \"applicants\": {\n        \"addrLine1\": \"zzz1571 ABBOTT ST\",\n        \"addrLine2\": null,\n        \"addrLine3\": null,\n        \"city\": \"zzzVictoria\",\n        \"clientFirstName\": \"qqqGerald\",\n        \"clientLastName\": \"qqqSmith\",\n        \"contact\": \"zzzJeffrey Hall\",\n        \"countryTypeCd\": \"CA\",\n        \"declineNotificationInd\": \"N\",\n        \"emailAddress\": \"lorna.trent@gov.bc.ca\",\n        \"faxNumber\": \"250-638-9694\",\n        \"firstName\": \"zzzLorna\",\n        \"lastName\": \"zzzTrent\",\n        \"middleName\": null,\n        \"partyId\": 1051,\n        \"phoneNumber\": \"250-635-7342\",\n        \"postalCd\": \"V9E 4S3\",\n        \"stateProvinceCd\": \"BC\"\n    },\n    \"comments\": [],\n    \"consentFlag\": null,\n    \"corpNum\": null,\n    \"expirationDate\": null,\n    \"furnished\": \"N\",\n    \"hasBeenReset\": false,\n    \"id\": 1051,\n    \"lastUpdate\": \"Thu, 20 Sep 2018 23:02:17 GMT\",\n    \"names\": [\n        {\n            \"choice\": 1,\n            \"comment\": null,\n            \"conflict1\": null,\n            \"conflict1_num\": null,\n            \"conflict2\": null,\n            \"conflict2_num\": null,\n            \"conflict3\": null,\n            \"conflict3_num\": null,\n            \"consumptionDate\": null,\n            \"decision_text\": null,\n            \"name\": \"STRANGWAY & SONS ACCOUNTING SERVICES\",\n            \"state\": \"NE\"\n        }\n    ],\n    \"natureBusinessInfo\": \"Corporate Accounting Firm\",\n    \"nrNum\": \"NR 2943527\",\n    \"nwpta\": [],\n    \"previousNr\": null,\n    \"priorityCd\": \"Y\",\n\t\"priorityDate\": \"Fri, 07 Dec 2018 11:26:51 GMT\",\n    \"requestTypeCd\": \"XCR\",\n    \"state\": \"HOLD\",\n    \"submitCount\": 1,\n    \"submittedDate\": \"Thu, 20 Sep 2018 10:27:55 GMT\",\n    \"submitter_userid\": \"\",\n    \"userId\": \"kial-ex\",\n    \"xproJurisdiction\": \"NEW BRUNSWICK\"\n}"
 						},
 						"url": {
 							"raw": "{{url}}/api/v1/requests/{{NR}}",
