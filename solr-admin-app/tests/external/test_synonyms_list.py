@@ -1,20 +1,14 @@
 from hamcrest import *
 from solr_admin.models.synonym import Synonym
+from tests.external.pages.synonyms_list_page import SynonymsListPage
 
 
 def test_synonyms_list(browser, base_url, db):
     db.session.add(Synonym(category='hello', synonyms_text='world'))
     db.session.commit()
 
-    browser.get(base_url + '/')
-    browser.find_element_by_tag_name('a').click()
-    browser.find_element_by_link_text('Synonym').click()
-    selection = browser.find_elements_by_css_selector('li.active')
+    page = SynonymsListPage(browser)
+    assert_that(page.list_size(), equal_to(1))
 
-    assert_that(selection[0].text, equal_to('Synonym'))
-    assert_that(selection[1].text, equal_to('List (1)'))
-
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(2)')
-    assert_that(cell.text, equal_to('hello'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(3)')
-    assert_that(cell.text, equal_to('world'))
+    assert_that(page.category_of_row(1).text, equal_to('hello'))
+    assert_that(page.synonyms_text_of_row(1).text, equal_to('world'))

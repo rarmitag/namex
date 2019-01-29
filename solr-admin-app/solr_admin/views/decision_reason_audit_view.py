@@ -40,4 +40,10 @@ class DecisionReasonAuditView(sqla.ModelView):
 
     # Flask-OIDC function that is called if the user is not logged in or does not have permissions.
     def inaccessible_callback(self, name, **kwargs):
+        kc = keycloak.Keycloak(None)
+        logged_in = kc._oidc.user_loggedin
+
+        if logged_in:
+            return 'not authorized'
+
         return keycloak.Keycloak(None).get_redirect_url(request.url)

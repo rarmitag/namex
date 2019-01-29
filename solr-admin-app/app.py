@@ -15,6 +15,9 @@ logging.basicConfig(level=logging.DEBUG)
 # Do the unpleasant but necessary library monkeypatching.
 monkeypatch.patch_ca_certs()
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 # Listen on all interfaces, and the catalog Python container expects the application to be on 8080.
 application, admin = solr_admin.create_application()
 if __name__ == '__main__':

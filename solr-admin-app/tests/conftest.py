@@ -1,6 +1,9 @@
 import os
+import time
+
 import pytest
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from sqlalchemy import engine_from_config
 from tests.external.support.driver.server_driver import ServerDriver
 
@@ -10,23 +13,24 @@ def port():
     return 8080
 
 
-@pytest.fixture(scope="function")
-def server_with_real_keycloak(port):
+@pytest.fixture(scope="session")
+def server(port):
     app = os.path.join(os.path.dirname(__file__), '..', 'app.py')
     server = ServerDriver(name='MyServer', port=port)
     server.start(cmd=['python', app])
     return server
 
 
-@pytest.fixture(scope="function")
-def server_with_fake_keycloak(port):
-    app = os.path.join(os.path.dirname(__file__), '..', 'tests', 'external', 'support', 'app_test.py')
-    server = ServerDriver(name='MyServer', port=port)
-    server.start(cmd=['python', app])
-    return server
-
-
 def get_browser():
+
+    options = Options()
+    options.headless = True
+    browser = webdriver.Firefox(options=options, executable_path=(gecko_driver()))
+
+    return browser
+
+
+def gecko_driver():
     import os
     import platform
     gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'geckodriver', 'mac', 'geckodriver')
@@ -34,24 +38,40 @@ def get_browser():
         gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'geckodriver', 'linux', 'geckodriver')
     if platform.system() == 'Windows':
         gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'geckodriver', 'windows', 'geckodriver.exe')
+    return gecko
 
-    return webdriver.Firefox(executable_path=gecko)
+
+def chrome_driver():
+    import os
+    import platform
+    gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'chromedriver', 'mac', 'chromedriver')
+    if platform.system() == 'Linux':
+        gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'chromedriver', 'linux', 'chromedriver')
+    if platform.system() == 'Windows':
+        gecko = os.path.join(os.path.dirname(__file__), 'external', 'support', 'chromedriver', 'windows', 'chromedriver.exe')
+    return gecko
 
 
-@pytest.fixture(scope="function")
-def browser_against_real_keycloak(server_with_real_keycloak):
+def connect_with(browser, login):
+    username = browser.find_element_by_css_selector('input#username')
+    password = browser.find_element_by_css_selector('input#password')
+    username.clear()
+    password.clear()
+    username.send_keys(login)
+    password.send_keys('WhatEver1')
+    button = browser.find_element_by_css_selector('input#kc-login')
+    button.submit()
+    time.sleep(1)
+
+
+@pytest.fixture(scope="session")
+def browser(server, base_url):
     browser = get_browser()
+    browser.get(base_url + '/admin/synonym')
+    connect_with(browser, login='names-with-admin-access')
     yield browser
     browser.quit()
-    server_with_real_keycloak.shutdown()
-
-
-@pytest.fixture(scope="function")
-def browser(server_with_fake_keycloak):
-    browser = get_browser()
-    yield browser
-    browser.quit()
-    server_with_fake_keycloak.shutdown()
+    server.shutdown()
 
 
 @pytest.fixture(scope="session")

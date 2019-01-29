@@ -5,8 +5,6 @@ class SynonymCreationPage:
 
     def __init__(self, browser, base_url):
         self.browser = browser
-        self.browser.get(base_url + '/')
-        self.browser.find_element_by_tag_name('a').click()
         self.refresh()
 
     def refresh(self):
