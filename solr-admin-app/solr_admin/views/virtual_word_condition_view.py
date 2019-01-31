@@ -3,9 +3,10 @@ from flask import current_app, request, get_flashed_messages
 from flask_admin.contrib import sqla
 
 from solr_admin import keycloak
+from solr_admin import models
 from solr_admin.services.create_records import create_records
 from solr_admin.services.update_records import update_records
-
+from solr_admin.models import restricted_condition_audit
 
 class VirtualWordConditionView(sqla.ModelView):
 
@@ -56,8 +57,21 @@ class VirtualWordConditionView(sqla.ModelView):
     def after_model_change(self, form, model, is_created):
         if is_created:
             create_records(model, self.session)
+            _create_audit_log(model, 'CREATE')
         else:
             update_records(self.session)
+            _create_audit_log(model, 'UPDATE')
 
     def after_model_delete(self, model):
         update_records(self.session)
+        _create_audit_log(model, 'DELETE')
+
+# Do the audit logging - we will write the complete record, not the delta (although the latter is possible).
+def _create_audit_log(model, action) -> None:
+    audit = restricted_condition_audit.RestrictedConditionAudit(
+    keycloak.Keycloak(None).get_username(), action,
+    model.id, model.rc_condition_text, model.rc_words, model.rc_consent_required, model.rc_consenting_body, model.rc_instructions, model.rc_allow_use)
+
+    session = models.db.session
+    session.add(audit)
+    session.commit()

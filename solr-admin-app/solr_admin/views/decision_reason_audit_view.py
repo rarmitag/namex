@@ -7,6 +7,10 @@ from solr_admin import keycloak
 
 # The customized ModelView that is used for working with the decision reason audits.
 class DecisionReasonAuditView(sqla.ModelView):
+    column_labels = {
+        'dr_id': 'Decision Reason Id',
+    }
+
     # Disallow the creation of audit events.
     can_create = False
 
@@ -26,10 +30,10 @@ class DecisionReasonAuditView(sqla.ModelView):
     column_default_sort = ('timestamp', True)
 
     # Allow the user to filter on the name and reason columns. Order is significant here.
-    column_filters = ['name','reason']
+    column_filters = ['username', 'action', 'dr_id', 'name', 'reason']
 
     # Search within the name and reason text.
-    column_searchable_list = ['name','reason']
+    column_searchable_list = ['username', 'action', 'dr_id', 'name', 'reason']
 
     # Use a custom list.html that provides a page size drop down with extra choices.
     list_template = 'generic_list.html'

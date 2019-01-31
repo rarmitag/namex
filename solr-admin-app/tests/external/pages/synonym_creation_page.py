@@ -1,5 +1,5 @@
 import time
-
+from selenium.webdriver.common.by import By
 
 class SynonymCreationPage:
 
@@ -19,3 +19,7 @@ class SynonymCreationPage:
         form = self.browser.find_element_by_css_selector('form')
         form.submit()
         time.sleep(1)
+
+    def getErrorCell(self):
+       cell = self.browser.find_element_by_css_selector('div.alert ')
+       return cell.text

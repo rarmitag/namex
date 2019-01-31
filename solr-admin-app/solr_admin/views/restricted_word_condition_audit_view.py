@@ -7,6 +7,11 @@ from solr_admin import keycloak
 
 # The customized ModelView that is used for working with the restricted condition audit.
 class RestrictedConditionAuditView(sqla.ModelView):
+    column_labels = {
+        'cnd_id': 'Condition Id',
+        'cnd_text': 'Condition Text',
+    }
+
     # Disallow the creation of audit events.
     can_create = False
 
@@ -26,10 +31,10 @@ class RestrictedConditionAuditView(sqla.ModelView):
     column_default_sort = ('timestamp', True)
 
     # Allow the user to filter on the cnd_id and cnd_text columns. Order is significant here.
-    column_filters = ['cnd_id','cnd_text']
+    column_filters = ['username',  'action', 'cnd_id', 'consenting_body', 'words', 'cnd_text', 'instructions']
 
     # Search within the cnd_text and cnd_id.
-    column_searchable_list = ['cnd_text','cnd_id']
+    column_searchable_list = ['username',  'action', 'cnd_id', 'consenting_body', 'words', 'cnd_text', 'instructions']
 
     # Use the generic list.html that provides a page size drop down with extra choices.
     list_template = 'generic_list.html'

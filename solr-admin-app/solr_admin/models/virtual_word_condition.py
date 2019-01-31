@@ -12,5 +12,5 @@ class VirtualWordCondition(db.Model):
     rc_words = Column(db.VARCHAR(1000))
     rc_condition_text = Column(db.VARCHAR(1000))
     rc_instructions = Column(db.VARCHAR(1000))
-    rc_allow_use = db.Column(db.Boolean(), default=True)
     rc_consent_required = db.Column(db.Boolean(), default=False)
+    rc_allow_use = db.Column(db.Boolean(), default=True)

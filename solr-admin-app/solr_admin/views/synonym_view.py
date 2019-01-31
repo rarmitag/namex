@@ -13,7 +13,7 @@ from solr_admin.models import synonym_audit
 
 # The customized ModelView that is used for working with the synonyms.
 from solr_admin.services.get_stems import get_stems
-
+from solr_admin.services.get_multi_word_synonyms import get_multi_word_synonyms
 
 class SynonymView(sqla.ModelView):
     # We're unlikely to do multiple deletes, so just get rid of the checkboxes and the drop down for delete.
@@ -29,14 +29,14 @@ class SynonymView(sqla.ModelView):
     column_default_sort = 'synonyms_text'
 
     # For some reason this needs to be initialized, but we will override it in is_accessible.
-    column_editable_list = ['category', 'comment', 'synonyms_text']
-    form_columns = ['category', 'comment', 'synonyms_text']
+    column_editable_list = ['category', 'synonyms_text', 'comment']
+    form_columns = ['category', 'synonyms_text', 'comment']
 
     # Allow the user to filter on the category column.
-    column_filters = ['category']
+    column_filters = ['category', 'synonyms_text', 'comment' ]
 
     # Search within the synonyms_text.
-    column_searchable_list = ['category', 'synonyms_text']
+    column_searchable_list = ['category', 'synonyms_text', 'comment']
 
     # Use a custom create.html that warns the user about sorting what they enter.
     create_template = 'synonyms_create.html'
@@ -92,10 +92,20 @@ def _validate_synonyms_text(synonyms_text: str) -> None:
     # Strip leading and trailing spaces.
     values = list(map(str.strip, values))
 
+    _validation_multi_word_check(values)
     _validation_character_check(values)
     _validation_multiple_spaces(values)
     _validation_duplicates_check(values)
     _validation_minimum_count(values)
+
+# Check for multi-word synonyms
+def _validation_multi_word_check(values) -> None:
+    disallowed_values = get_multi_word_synonyms(values)
+
+    if disallowed_values:
+        raise validators.ValidationError(
+            'Multi-word synonyms text cannot be processed here, please contact application support. ({})'
+                .format(', '.join(disallowed_values)))
 
 
 # Only a-z, 0-9, and space are allowed in the synonyms.
