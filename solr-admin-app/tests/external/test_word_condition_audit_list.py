@@ -20,19 +20,16 @@ def test_word_conditon_audit_creation(browser, base_url, db):
     assert_that(selection[0].text, equal_to('Restricted Condition Audit'))
     assert_that(selection[1].text, equal_to('List (1)'))
 
-    #cell order:
-    # Username 2, Timestamp, Action, Cnd Id, Cnd Text,
-    # Words, Consent Required, Consenting Body, Instructions, Allow Use
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(2)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-username')
     assert_that(cell.text, equal_to('names-with-admin-access'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(4)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-action')
     assert_that(cell.text, equal_to('CREATE'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(6)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-cnd_text')
     assert_that(cell.text, equal_to('This means something'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(7)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-words')
     assert_that(cell.text, equal_to('needs, BC, approval'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(9)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-consenting_body')
     assert_that(cell.text, equal_to('me'))
-    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td:nth-child(10)')
+    cell = browser.find_element_by_css_selector('table.model-list tbody tr:nth-child(1) td.col-instructions')
     assert_that(cell.text, equal_to('needs approval'))
 
