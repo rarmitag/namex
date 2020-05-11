@@ -74,6 +74,7 @@ class SolrQueries:
             '&q=cobrs_phonetic:{start_str}'
             '&wt=json'
             '&start={start}&rows={rows}'
+            '&fl=source,id,name,score,start_date,jurisdiction'
             '&sort=score%20desc,txt_starts_with%20asc'
             '&fq=-{exact_name}'
             '{synonyms_clause}',
@@ -82,6 +83,7 @@ class SolrQueries:
             '&q=dblmetaphone_name:{start_str}'
             '&wt=json'
             '&start={start}&rows={rows}'
+            '&fl=source,id,name,score,start_date,jurisdiction'
             '&sort=score%20desc,txt_starts_with%20asc'
             '&fq=-{exact_name}'
             '{synonyms_clause}',
@@ -645,7 +647,7 @@ class SolrQueries:
             raise Exception('SOLR: SOLR_SYNONYMS_API_URL is not set')
 
         # If the web service call fails, the caller will catch and then return a 500 for us.
-        query = solr_synonyms_api_url + '/' + col + '/' + parse.quote(token)
+        query = solr_synonyms_api_url + '/synonyms/' + col + '/' + parse.quote(token)
         current_app.logger.debug('Query: ' + query)
 
         try:
@@ -668,7 +670,7 @@ class SolrQueries:
             raise Exception('SOLR: SOLR_SYNONYMS_API_URL is not set')
 
         # If the web service call fails, the caller will catch and then return a 500 for us.
-        query = solr_synonyms_api_url + '/' + 'stems_text' + '/' + parse.quote(token)
+        query = solr_synonyms_api_url + '/synonyms/' + 'stems_text' + '/' + parse.quote(token)
         current_app.logger.debug('Query: ' + query)
         try:
             connection = request.urlopen(query)
@@ -1087,5 +1089,6 @@ class SolrQueries:
     @classmethod
     def keep_candidate(cls, candidate, name, names):
         if len([doc['id'] for doc in names if doc['id'] == candidate['id']]) == 0:
-            names.append({'name': name, 'id': candidate['id'], 'source': candidate['source']})
-
+            names.append({'name': name, 'id': candidate['id'], 'source': candidate['source'],
+                          'jurisdiction': candidate.get('jurisdiction', ''),
+                          'start_date': candidate.get('start_date', '')})

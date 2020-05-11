@@ -3,6 +3,7 @@
 from . import db, ma
 from marshmallow import fields
 from sqlalchemy.orm import backref
+from sqlalchemy import event
 
 class Name(db.Model):
     __tablename__ = 'names'
@@ -32,14 +33,44 @@ class Name(db.Model):
     # if a comment is added during decision, link it to the name record to be sent back to NRO
     comment = db.relationship("Comment", backref=backref("related_name", uselist=False), foreign_keys=[commentId])
 
+
+    # required for name request name analysis
+    _name_type_cd = db.Column('name_type_cd', db.String(10))
+    _clean_name = db.Column('clean_name', db.String(1024), index=True)
+
     NOT_EXAMINED = 'NE'
     APPROVED = 'APPROVED'
     REJECTED = 'REJECTED'
     CONDITION = 'CONDITION'
+    # needed for name request reservation before completing the nr
+    RESERVED = 'RESERVED'
+    COND_RESERVE = 'COND-RESERVE'
+
+    #Properties added for Name Request
+    @property
+    def name_type_cd(self):
+        """Property containing the name type which is used by name Request."""
+        return self._name_type_cd
+
+    @name_type_cd.setter
+    def name_type_cd(self, value: str):
+        self._name_type_cd = value
+
+    @property
+    def clean_name(self):
+        """Property containing the cleaned approved name used in analysis in Name Request"""
+        return self._clean_name
+
+    @clean_name.setter
+    def clean_name(self, value: str):
+        self._clean_name = value
 
     def as_dict(self):
         return {
             "name": self.name,
+            "clean_name": self.clean_name,
+            "name_type_cd": self.name_type_cd,
+            "designation": self.designation,
             "choice": self.choice,
             "state": self.state,
             "conflict1": self.conflict1,
@@ -68,7 +99,6 @@ class Name(db.Model):
     def delete_from_db(self):
         db.session.delete(self)
         db.session.commit()
-
 
 class NameSchema(ma.ModelSchema):
     class Meta:

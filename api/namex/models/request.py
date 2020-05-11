@@ -3,8 +3,10 @@
 from . import db, ma
 from flask import current_app
 from namex.exceptions import BusinessException
-from sqlalchemy import Sequence
+from sqlalchemy import event
 from sqlalchemy.orm import backref
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import and_, func
 from marshmallow import Schema, fields, post_load, post_dump
 from .nwpta import PartnerNameSystem
 from .user import User, UserSchema
@@ -13,11 +15,18 @@ from .applicant import Applicant
 from .name import Name, NameSchema
 from .state import State, StateSchema
 from datetime import datetime
+from enum import Enum
+import re
+
+from namex.constants import ValidSources, request_type_mapping, EntityType,EntityTypeXSO, EntityTypeXCP, EntityTypeXULC, \
+EntityTypeXCORP, EntityTypeFI, EntityTypeSO, EntityTypeCCC, EntityTypeCP, EntityTypeULC, EntityTypeBCORP
 
 
-# create sequence if not exists nr_seq;
 # noinspection PyPep8Naming
+from ..criteria.request.query_criteria import RequestConditionCriteria
+
 class Request(db.Model):
+
     __tablename__ = 'requests'
 
     # Field names use a JSON / JavaScript naming pattern,
@@ -39,7 +48,7 @@ class Request(db.Model):
     xproJurisdiction = db.Column('xpro_jurisdiction', db.String(40))
     corpNum = db.Column('corp_num', db.String(20), default=None)
     submitter_userid = db.Column('submitter_userid', db.Integer, db.ForeignKey('users.id'))
-    #legacy sync tracking
+    # legacy sync tracking
     furnished = db.Column('furnished', db.String(1), default='N', index=True)
 
     # Flag to indicate this NR has been reset. Cleared upon submission, so it is only true after
@@ -73,8 +82,56 @@ class Request(db.Model):
     # Relationships - Examiner Comments
     partnerNS = db.relationship('PartnerNameSystem', lazy='dynamic')
 
+    # Name Request Additional Fields
+    _request_action_cd = db.Column('request_action_cd', db.String(10))
+    _entity_type_cd = db.Column('entity_type_cd', db.String(10))
+    consent_dt = db.Column('consent_dt', db.DateTime(timezone=True))
+    _payment_token = db.Column('payment_id', db.String(4096))
+    _payment_completion_date = db.Column('payment_completion_date', db.DateTime(timezone=True))
+    _source = db.Column('source', db.String(15), default=ValidSources.NRO)
+
     ##### end of table definitions
     REQUEST_FURNISHED = 'Y'
+
+    # properties
+    @hybrid_property
+    def payment_token(self):
+        """Property containing the payment token."""
+        return self._payment_token
+
+    @payment_token.setter
+    def payment_token(self, token: int):
+        if self.locked:
+            self._raise_default_lock_exception()
+        self._payment_token = token
+
+    @hybrid_property
+    def payment_completion_date(self):
+        """Property containing the date the payment cleared."""
+        return self._payment_completion_date
+
+    @property
+    def source(self):
+        """Property containing the source app."""
+        return self._source
+
+    @property
+    def request_action_cd(self):
+        """Property containing the request action from name request."""
+        return self._request_action_cd
+
+    @request_action_cd.setter
+    def request_action_cd(self, value: str):
+        self._request_action_cd = value
+
+    @property
+    def entity_type_cd(self):
+        """Property containing the entity type from name request"""
+        return self._entity_type_cd
+
+    @entity_type_cd.setter
+    def entity_type_cd(self, value: str):
+        self._entity_type_cd = value
 
     def __init__(self, *args, **kwargs):
         pass
@@ -91,22 +148,25 @@ class Request(db.Model):
         except:
             previousNr = None
 
-        return {'id' : self.id,
-                'submittedDate' : self.submittedDate,
-                'lastUpdate' : self.lastUpdate,
-                'userId' : '' if (self.activeUser is None) else self.activeUser.username,
-                'submitter_userid' : '' if (self.submitter is None) else self.submitter.username,
-                'state' : self.stateCd,
+        return {'id': self.id,
+                'submittedDate': self.submittedDate,
+                'lastUpdate': self.lastUpdate,
+                'userId': '' if (self.activeUser is None) else self.activeUser.username,
+                'submitter_userid': '' if (self.submitter is None) else self.submitter.username,
+                'state': self.stateCd,
                 'previousStateCd': self.previousStateCd,
-                'nrNum' : self.nrNum,
-                'consentFlag' : self.consentFlag,
-                'expirationDate' : self.expirationDate,
-                'requestTypeCd' : self.requestTypeCd,
-                'priorityCd' : self.priorityCd,
+                'nrNum': self.nrNum,
+                'consentFlag': self.consentFlag,
+                'consent_dt': self.consent_dt,
+                'expirationDate': self.expirationDate,
+                'requestTypeCd': self.requestTypeCd,
+                'entity_type_cd':self.entity_type_cd,
+                'request_action_cd': self.request_action_cd,
+                'priorityCd': self.priorityCd,
                 'priorityDate': self.priorityDate,
-                'xproJurisdiction' : self.xproJurisdiction,
-                'additionalInfo' : self.additionalInfo,
-                'natureBusinessInfo' : self.natureBusinessInfo,
+                'xproJurisdiction': self.xproJurisdiction,
+                'additionalInfo': self.additionalInfo,
+                'natureBusinessInfo': self.natureBusinessInfo,
                 'furnished': self.furnished if (self.furnished is not None) else 'N',
                 'hasBeenReset': self.hasBeenReset,
                 'previousRequestId': self.previousRequestId,
@@ -114,7 +174,8 @@ class Request(db.Model):
                 'submitCount': self.submitCount,
                 'corpNum': self.corpNum,
                 'names': [name.as_dict() for name in self.names.all()],
-                'applicants': '' if (self.applicants.one_or_none() is None) else self.applicants.one_or_none().as_dict(),
+                'applicants': '' if (
+                        self.applicants.one_or_none() is None) else self.applicants.one_or_none().as_dict(),
                 'comments': [comment.as_dict() for comment in self.comments.all()],
                 'nwpta': [partner_name.as_dict() for partner_name in self.partnerNS.all()]
                 }
@@ -125,16 +186,16 @@ class Request(db.Model):
 
     def save_to_db(self):
         # if self.id is None:
-            # NR is not the primary key, but has to be a unique value.
-            # seq = Sequence('nr_seq')
-            # next_nr = db.engine.execute(seq)
-            # self.nr = 'NR{0:0>8}'.format(next_nr)
+        # NR is not the primary key, but has to be a unique value.
+        # seq = Sequence('nr_seq')
+        # next_nr = db.engine.execute(seq)
+        # self.nr = 'NR{0:0>8}'.format(next_nr)
 
         db.session.add(self)
         db.session.commit()
 
     def delete_from_db(self):
-        #TODO: Add listener onto the SQLALchemy event to block deletes
+        # TODO: Add listener onto the SQLALchemy event to block deletes
         raise BusinessException({"code": "cannot_delete_nr",
                                  "description":
                                      "NRs cannot be deleted, maybe try cancelling instead"},
@@ -154,17 +215,17 @@ class Request(db.Model):
             return existing_nr, False
 
         # this will error if there's nothing in the queue - likelihood ~ 0
-        r = db.session.query(Request).\
-                filter(Request.stateCd.in_([State.DRAFT])).\
-                order_by(Request.priorityCd.desc(), Request.submittedDate.asc()).\
-                with_for_update().first()
+        r = db.session.query(Request). \
+            filter(Request.stateCd.in_([State.DRAFT])). \
+            order_by(Request.priorityCd.desc(), Request.submittedDate.asc()). \
+            with_for_update().first()
         # this row is now locked
 
         if not r:
             raise BusinessException(None, 404)
 
         # mark this as assigned to the user, masking it from others.
-        r.stateCd= State.INPROGRESS
+        r.stateCd = State.INPROGRESS
         r.userId = userObj.id
 
         db.session.add(r)
@@ -178,8 +239,8 @@ class Request(db.Model):
            and assigned to the user
            this assumes that a user can ONLY EVER have 1 Request in progress at a time.
         """
-        existing_nr = db.session.query(Request).\
-            filter(Request.userId == userObj.id, Request.stateCd == State.INPROGRESS).\
+        existing_nr = db.session.query(Request). \
+            filter(Request.userId == userObj.id, Request.stateCd == State.INPROGRESS). \
             one_or_none()
 
         return existing_nr
@@ -202,6 +263,125 @@ class Request(db.Model):
 
         return True
 
+    # START NEW NAME_REQUEST SERVICE METHODS, WE WILL REFACTOR THESE SHORTLY
+        # START NEW NAME_REQUEST SERVICE METHODS, WE WILL REFACTOR THESE SHORTLY
+    @classmethod
+    def get_general_query(cls):
+        filters = [
+                cls.id == Name.nrId,
+                cls.stateCd.in_([State.APPROVED, State.CONDITIONAL]),
+                cls.requestTypeCd.in_(
+                    [EntityType.PRIV.value,
+                     EntityType.BCORP.value, EntityTypeBCORP.CCR.value,
+                     EntityTypeBCORP.CT.value,
+                     EntityTypeBCORP.RCR.value,
+                     EntityType.CP.value, EntityTypeCP.CCP.value, EntityTypeCP.CTC.value,
+                     EntityTypeCP.RCP.value,
+                     EntityType.FI.value, EntityTypeFI.CFI.value, EntityTypeFI.RFI.value,
+                     EntityType.SO.value, EntityTypeSO.ASO.value, EntityTypeSO.CSO.value,
+                     EntityTypeSO.CSSO.value,
+                     EntityTypeSO.CTSO.value, EntityTypeSO.RSO.value,
+                     EntityType.ULC.value, EntityTypeULC.UC.value, EntityTypeULC.CUL.value,
+                     EntityTypeULC.ULCT.value, EntityTypeULC.RUL.value,
+                     EntityType.XSO.value, EntityTypeXSO.XASO.value, EntityTypeXSO.XCASO.value,
+                     EntityTypeXSO.XCSO.value, EntityTypeXSO.XRSO.value,
+                     EntityType.CCC.value, EntityTypeCCC.CC.value, EntityTypeCCC.CCV.value,
+                     EntityTypeCCC.CCCT.value, EntityTypeCCC.RCC.value,
+                     EntityType.PAR.value,
+                     EntityType.XCORP.value, EntityTypeXCORP.XCCR.value,
+                     EntityTypeXCORP.XRCR.value,
+                     EntityTypeXCORP.AS.value,
+                     EntityType.XULC.value, EntityTypeXULC.UA.value, EntityTypeXULC.XCUL.value,
+                     EntityTypeXULC.XRUL.value,
+                     EntityType.XCP.value, EntityTypeXCP.XCCP.value, EntityTypeXCP.XRCP.value,
+                     EntityType.BC.value
+                     ]),
+                Name.state.in_([Name.APPROVED, Name.CONDITION]),
+
+            ]
+
+        criteria = RequestConditionCriteria(
+            fields=[Name.name],
+            filters=filters
+            )
+
+        return criteria
+
+    @classmethod
+    def get_query_exact_match(cls, criteria, prep_name):
+        criteria.filters.append(func.lower(Name.name) == func.lower(prep_name))
+
+        results = Request.find_by_criteria(criteria)
+        flattened = [item.strip() for sublist in results for item in sublist]
+
+        return flattened
+
+    @classmethod
+    def get_query_distinctive_descriptive(cls, descriptive_element, criteria, distinctive=False):
+        if not distinctive:
+            # Reset filter index 5 which contains the descriptive in the previous round.
+            # The filter index 4 contains distinctive value
+            if len(criteria.filters) > 5:
+                criteria.filters.pop()
+            substitutions = ' ?| '.join(map(str, descriptive_element)) + ' ?'
+            criteria.filters.append(func.lower(Name.name).op('~')(r' \y{}\y'.format(substitutions)))
+        else:
+            substitutions = '|'.join(map(str, descriptive_element))
+            criteria.filters.append(func.lower(Name.name).op('~')(r'^\s*\W*({})\y\W*\s*'.format(substitutions)))
+            return criteria
+
+        results = Request.find_by_criteria(criteria)
+        flattened = [item.strip() for sublist in results for item in sublist]
+
+        return flattened
+
+
+    @classmethod
+    def find_by_criteria(cls, criteria=None):
+        RequestConditionCriteria.is_valid_criteria(criteria)
+
+        query = cls.query.with_entities(*criteria.fields) \
+            .filter(and_(*criteria.filters))
+
+        # print(query.statement)
+        return query.all()
+
+#set the source from NRO, Societis Online, Name Request
+@event.listens_for(Request, 'before_insert')
+@event.listens_for(Request, 'before_update')
+def set_source(mapper, connection, target):  # pylint: disable=unused-argument; SQLAlchemy callback signature
+    """Set the source of the NR."""
+    request = target
+    soc_list = []
+    soc_list = ['SO','ASO','CSO','RSO','CTSO','XSO','XCSO','XRSO','XASO','XCASO','CSSO']
+
+    # comes from NRO/Societies Online
+    if(re.match(r"NR [0-9]+", request.nrNum) and request.requestTypeCd not in soc_list):
+        request._source = ValidSources.NRO.value  # pylint: disable=protected-access
+    else:
+        if (re.match(r"NR [A-Z]+", request.nrNum)):
+             request._source = ValidSources.NAMEREQUEST.value   # pylint: disable=protected-access
+        else:
+            if(request.requestTypeCd in soc_list ):
+             request._source = ValidSources.SO.value   # pylint: disable=protected-access
+
+
+@event.listens_for(Request, 'before_insert')
+@event.listens_for(Request, 'before_update')
+def update_request_action_entity_type(mapper, connection, target): # pylint: disable=unused-argument; SQLAlchemy callback signature
+    """Set the request_action when it is null because the NR is coming from NRO or NAMEX or Societies Online"""
+    # needed to break apart  request_type
+    request = target
+    if (re.match(r"NR [0-9]+", request.nrNum) and request.requestTypeCd != None):
+        # todo: handle assumed name as it is a name type and not currently a request action?
+        # map the legacy request_type to the new Entity_type and Request_action
+        new_value = request.requestTypeCd
+        output = [item for item in request_type_mapping
+                  if item[0] == new_value]
+
+        request._entity_type_cd = output[0][1]
+        request._request_action_cd = output[0][2]
+
 
 class RequestsSchema(ma.ModelSchema):
     class Meta:
@@ -209,9 +389,9 @@ class RequestsSchema(ma.ModelSchema):
         additional = ['stateCd']
 
     names = ma.Nested(NameSchema, many=True)
-    activeUser = ma.Nested(UserSchema, many=False,  only='username')
-    submitter = ma.Nested(UserSchema, many=False,  only='username')
-    comments = ma.Nested(CommentSchema, many=True,  only=['comment', 'examiner', 'timestamp'])
+    activeUser = ma.Nested(UserSchema, many=False, only='username')
+    submitter = ma.Nested(UserSchema, many=False, only='username')
+    comments = ma.Nested(CommentSchema, many=True, only=['comment', 'examiner', 'timestamp'])
 
     @post_dump
     def clean_missing(self, data):
@@ -227,23 +407,23 @@ class RequestsHeaderSchema(ma.ModelSchema):
         # sqla_session = db.scoped_session
         # additional = ['stateCd']
         fields = ('additionalInfo'
-                 ,'consentFlag'
-                 ,'corpNum'
-                 ,'expirationDate'
-                 ,'furnished'
-                 ,'hasBeenReset'
-                 ,'id'
-                 ,'natureBusinessInfo'
-                 ,'nrNum'
-                 ,'nroLastUpdate'
-                 ,'priorityCd'
-                 ,'requestTypeCd'
-                 ,'stateCd'
-                 ,'previousStateCd'
-                 ,'submitCount'
-                 ,'submittedDate'
-                 ,'xproJurisdiction'
-                 )
+                  , 'consentFlag'
+                  , 'corpNum'
+                  , 'expirationDate'
+                  , 'furnished'
+                  , 'hasBeenReset'
+                  , 'id'
+                  , 'natureBusinessInfo'
+                  , 'nrNum'
+                  , 'nroLastUpdate'
+                  , 'priorityCd'
+                  , 'requestTypeCd'
+                  , 'stateCd'
+                  , 'previousStateCd'
+                  , 'submitCount'
+                  , 'submittedDate'
+                  , 'xproJurisdiction'
+                  )
 
 
 class RequestsSearchSchema(ma.ModelSchema):
@@ -252,25 +432,26 @@ class RequestsSearchSchema(ma.ModelSchema):
         # sqla_session = db.scoped_session
         # additional = ['stateCd']
         fields = ('additionalInfo'
-                 ,'comments'
-                 ,'consentFlag'
-                 ,'corpNum'
-                 ,'expirationDate'
-                 ,'furnished'
-                 ,'lastUpdate'
-                 ,'natureBusinessInfo'
-                 ,'nrNum'
-                 ,'nroLastUpdate'
-                 ,'priorityCd'
-                 ,'priorityDate'
-                 ,'requestTypeCd'
-                 ,'stateCd'
-                 ,'submitCount'
-                 ,'submittedDate'
-                 ,'xproJurisdiction'
-                 ,'names'
-                 ,'activeUser'
-                 )
+                  , 'comments'
+                  , 'consentFlag'
+                  , 'corpNum'
+                  , 'expirationDate'
+                  , 'furnished'
+                  , 'lastUpdate'
+                  , 'natureBusinessInfo'
+                  , 'nrNum'
+                  , 'nroLastUpdate'
+                  , 'priorityCd'
+                  , 'priorityDate'
+                  , 'requestTypeCd'
+                  , 'stateCd'
+                  , 'submitCount'
+                  , 'submittedDate'
+                  , 'xproJurisdiction'
+                  , 'names'
+                  , 'activeUser'
+                  )
+
     names = ma.Nested(NameSchema, many=True)
-    activeUser = ma.Nested(UserSchema, many=False,  only='username')
+    activeUser = ma.Nested(UserSchema, many=False, only='username')
     comments = ma.Nested(CommentSchema, many=True, only=['comment', 'examiner', 'timestamp'])
