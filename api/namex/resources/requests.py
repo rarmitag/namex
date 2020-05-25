@@ -29,7 +29,7 @@ from namex.services.name_request import check_ownership, get_or_create_user_by_j
 from namex.utils.util import cors_preflight
 from namex.analytics import SolrQueries, RestrictedWords, VALID_ANALYSIS as ANALYTICS_VALID_ANALYSIS
 from namex.services.nro import NROServicesError
-from namex.services.name_request.auto_analyse.protected_name_analysis import ProtectedNameAnalysisService
+#from namex.services.name_request.auto_analyse.protected_name_analysis import ProtectedNameAnalysisService
 
 import datetime
 from datetime import datetime as dt
@@ -449,6 +449,8 @@ class Request(Resource):
                 # if we're changing to a completed or cancelled state, clear reset flag on NR record
                 if state in State.COMPLETED_STATE + [State.CANCELLED]:
                     nrd.hasBeenReset = False
+                    if nrd.stateCd == State.CONDITIONAL and nrd.consentFlag is None:
+                        nrd.consentFlag = 'Y'
 
 
                 ### COMMENTS ###
@@ -553,6 +555,11 @@ class Request(Resource):
                 json_input['submittedDate'] = str(datetime.datetime.strptime(
                     str(json_input['submittedDate'][5:]), '%d %b %Y %H:%M:%S %Z'))
 
+
+            if json_input.get('consent_dt', None):
+                json_input['consent_dt'] = str(datetime.datetime.strptime(
+                    str(json_input['consent_dt'][5:]), '%d %b %Y %H:%M:%S %Z'))
+
             # convert NWPTA dates to correct format
             if json_input.get('nwpta', None):
                 for region in json_input['nwpta']:
@@ -574,6 +581,7 @@ class Request(Resource):
                 if warnings:
                     MessageServices.add_message(MessageServices.WARN, 'nro_lock', warnings)
 
+
             ### REQUEST HEADER ###
 
             # update request header
@@ -594,6 +602,8 @@ class Request(Resource):
             nrd.natureBusinessInfo = convert_to_ascii(json_input.get('natureBusinessInfo', None))
             nrd.stateCd = state
             nrd.userId = user.id
+            nrd.consentFlag = json_input.get('consentFlag',None)
+            nrd.consent_dt = json_input.get('consent_dt',None)
 
             if reset:
                 # set the flag indicating that the NR has been reset
@@ -626,6 +636,10 @@ class Request(Resource):
             if nrd.natureBusinessInfo != orig_nrd['natureBusinessInfo']: is_changed__request = True
             if nrd.previousRequestId != orig_nrd['previousRequestId']: is_changed__previous_request = True
             if nrd.stateCd != orig_nrd['state']: is_changed__request_state = True
+
+            if nrd.stateCd != State.CONDITIONAL and is_changed__request_state:
+                nrd.consentFlag = None
+                nrd.consent_dt = None
 
             ### END request header ###
 
@@ -863,6 +877,8 @@ class Request(Resource):
                     MessageServices.add_message('error', 'reset_request_in_NRO', err)
 
                 nrd.expirationDate = None
+                nrd.consentFlag = None
+                nrd.consent_dt = None
                 is_changed__request = True
 
                 change_flags = {
@@ -1121,20 +1137,32 @@ class NRNames(Resource):
             nrd_name.comment = None
 
         #add clean name for conflict matching in name request
-        if(nrd_name.state == 'APPROVED'):
-            service = ProtectedNameAnalysisService()
-            np_svc = service.name_processing_service
-            np_svc.set_name(nrd_name.name)
-            cleaned_name = np_svc.processed_name.upper()
-            nrd_name.clean_name = cleaned_name
-        else:
-            cleaned_name = None
-            nrd_name.clean_name = cleaned_name
+        #if(nrd_name.state == 'APPROVED'):
+        #    try:
+        #        service = ProtectedNameAnalysisService()
+        #        np_svc = service.name_processing_service
+        #        np_svc.set_name(nrd_name.name)
+        #        cleaned_name = np_svc.processed_name.upper()
+        #        nrd_name.clean_name = cleaned_name
+        #    except Exception as error:
+        #        current_app.logger.error("Error on clean name processing. CleanedName[0], Error:{1}".format(cleaned_name, error))
+        #        return jsonify({"message": "Error on clean name."}), 500
+        #else:
+        #    cleaned_name = None
+        #    nrd_name.clean_name = cleaned_name
 
         # Updating existing key's value
-        json_data.update(clean_name=cleaned_name)
+        #try:
+        #    json_data.update(clean_name=cleaned_name)
+        #except Exception as error:
+        #    current_app.logger.error("Error on json update for clean_name. CleanedName[0], Error:{1}".format(cleaned_name, error))
+        #    return jsonify({"message": "Error on clean name."}), 500
 
-        nrd_name.save_to_db()
+        try:
+            nrd_name.save_to_db()
+        except Exception as error:
+            current_app.logger.error("Error on nrd_name update, Error:{0}".format(error))
+            return jsonify({"message": "Error on name update, saving to the db."}), 500
 
         EventRecorder.record(user, Event.PUT, nrd, json_data)
 
