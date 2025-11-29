@@ -5,7 +5,7 @@ from solr_admin.models.restricted_word_condition_tmp import RestrictedWordCondit
 from solr_admin.models.virtual_word_condition import VirtualWordCondition
 from solr_admin.services.create_records import create_records
 
-@timeout(60)
+#@timeout(60)
 def update_records(session):
     session.query(RestrictedWordConditionTmp).delete()
     session.query(RestrictedConditionTmp).delete()
